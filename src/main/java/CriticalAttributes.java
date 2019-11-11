@@ -1,7 +1,9 @@
-package src;
+package main.java;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +14,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import com.opencsv.CSVWriter;
 
 public class CriticalAttributes {
 
@@ -21,6 +24,16 @@ public class CriticalAttributes {
 
 		JSONParser jsonParser = new JSONParser();
 		
+		FileWriter outputFile=null;
+        File file = new File(".//sample.csv");
+		
+        try {
+			outputFile = new FileWriter(file);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        CSVWriter writer = new CSVWriter(outputFile);
 		//Read json files in loop from the folder. Then construct a map or a set with a collection of tuples.
         
         try (FileReader reader = new FileReader(".//motogp_riders.json"))
@@ -32,8 +45,8 @@ public class CriticalAttributes {
             System.out.println(jsonList.size());
             HashSet<String> headerRow = new HashSet<String>(); // attributes
             HashSet<String> metadata = new HashSet<String>(); // auxiliary metadata
-            List<String> datarows = new ArrayList<String>();
-            HashSet<String> queries = new HashSet<String>();
+            List<List<String>> datarows = new ArrayList<List<String>>();
+            HashSet<List<String>> queries = createQueryList();
             
             //Iterate and create the tuples. And if it is last iteration then it is a table context.
             //jsonList.forEach( jsonobj -> parseJsonObject( (JSONObject) jsonobj , jsonList.size()) );
@@ -47,18 +60,28 @@ public class CriticalAttributes {
             	else {
             		headerRow.addAll(temp.keySet());
             		//System.out.println(temp.values());
-            		for(String header : temp.keySet())
+            		for(String header : temp.keySet()) {
             			datarowslist.add(temp.get(header));
+            		}
             		
-            		System.out.println(datarowslist);
-                	datarows.addAll(temp.values());
+            		//System.out.println(datarowslist);
+                	//datarows.addAll(temp.values());
+            		datarows.add(datarowslist);
             	}
             	
             	//System.out.println(temp.keySet());
             }
-            //System.out.println(headerRow+"----"+datarows+"----"+metadata);
-             
- 
+            System.out.println(headerRow+"----"+datarows+"----"+metadata+"----"+queries);
+            
+            String[] data1 = {String.join(":",headerRow),String.join(":",datarows.toString()),
+            		String.join(":",metadata),String.join(":",queries.toString())};
+            writer.writeNext(data1);
+            /*for(List<String> dataList : datarows) {
+            	for(String str : dataList) {
+            		System.out.println(str);
+            	}
+            }*/
+            writer.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -66,6 +89,23 @@ public class CriticalAttributes {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        //writer.close();
+	}
+	
+	private static HashSet<List<String>> createQueryList() {
+		
+		HashSet<List<String>> queries = new HashSet<List<String>>();
+		List<String> q1 = new ArrayList<String>();
+		List<String> q2 = new ArrayList<String>();
+		List<String> q3 = new ArrayList<String>();
+		
+		q1.add("motogp riders"); q1.add("1");
+		q2.add("wikipedia motogp records"); q2.add("2");
+		q3.add("motogp champions history"); q3.add("3");
+		
+		queries.add(q1); queries.add(q2); queries.add(q3);
+		return queries;
+		
 	}
 	
 	 private static String parseJsonObject(JSONObject jsonobj, int jsonlength) 
