@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
@@ -81,21 +82,43 @@ public class TFIDFCalculator {
         public void getCosineSimilarity(List<List<Double>> tfidfDocsVector) {
             for (int i = 0; i < tfidfDocsVector.size(); i++) {
                 for (int j = 0; j < tfidfDocsVector.size(); j++) {
-                	double cosinesim = new CosineSimilarity().cosineSimilarity(tfidfDocsVector.get(i),tfidfDocsVector.get(j));
-                    System.out.println("between " + i + " and " + j + "  =  "+ cosinesim);                                      
+                	if(tfidfDocsVector.get(i).size() != tfidfDocsVector.get(j).size()) {
+                		if(tfidfDocsVector.get(i).size() > tfidfDocsVector.get(j).size()) {
+                			for(int k = tfidfDocsVector.get(j).size(); k < tfidfDocsVector.get(i).size(); k++) {
+                				tfidfDocsVector.get(j).add(0.0);
+                			}
+                		}else {
+                			for(int k = tfidfDocsVector.get(i).size(); k < tfidfDocsVector.get(j).size(); k++) {
+                				tfidfDocsVector.get(i).add(0.0);
+                			}
+                		}
+                		double cosinesim = new CosineSimilarity().cosineSimilarity(tfidfDocsVector.get(i),tfidfDocsVector.get(j));
+                		//System.out.println("between " + i + " and " + j + "  =  "+ cosinesim);
+                	}else {
+                		double cosinesim = new CosineSimilarity().cosineSimilarity(tfidfDocsVector.get(i),tfidfDocsVector.get(j));
+                		//System.out.println("between " + i + " and " + j + "  =  "+ cosinesim); 
+                	}
                 }
             }
         }
+        
+        public static HashMap<String,Double> getTdIdfVectors(List<List<String>> documents, TFIDFCalculator calculator) {
+        	HashMap<String,Double> tfidfScores = new HashMap<String,Double>();
+        	for(List<String>  doclist : documents) {
+            	//List<Double> tfidfDocsList = new ArrayList<Double>();
+            	for(String docs : doclist) {
+            		double score = calculator.tfIdf(doclist, documents, docs);
+            		//System.out.println(docs+" ---- "+score);
+            		tfidfScores.put(docs, score);
+            		
+            	}
+        	}
+        	return tfidfScores;
+        }
 
     
-
     public static void main(String[] args) {
 
-        List<String> doc1 = Arrays.asList("Lorem", "ipsum", "dolor", "ipsum", "sit", "ipsum");
-        List<String> doc2 = Arrays.asList("Vituperata", "incorrupte", "at", "ipsum", "pro", "quo");
-        List<String> doc3 = Arrays.asList("Has", "persius", "disputationi", "id", "simul","id");
-        List<List<String>> documents = Arrays.asList(doc1, doc2, doc3);
-        //List<String> attrList = null;
         List<List<Double>> tfidfDocsVector = new ArrayList<List<Double>>();
         TFIDFCalculator calculator = new TFIDFCalculator();
         
@@ -106,56 +129,41 @@ public class TFIDFCalculator {
 			for (CSVRecord csvRecord : csvParser) {
 				if(csvRecord.getRecordNumber() == 1)
 					continue;
-				List<String> attrList = new ArrayList<String>();
-				List<String> contextList = new ArrayList<String>();
-				System.out.println(csvRecord.get(0));
+				
+				List<List<String>> attrDoc = new ArrayList<List<String>>();
+				List<List<String>> contextDoc = new ArrayList<List<String>>();
+				
 				String[] allAttr = csvRecord.get(0).split(":::");
 				System.out.println(allAttr.length);
 				String[] contexts = csvRecord.get(2).split(":::");
 				for(String attr : allAttr) {
-					if(attr != null)
+					List<String> attrList = new ArrayList<String>();
+					if(attr != null) {
 					   attrList.add(attr);
+					}
+					attrDoc.add(attrList);
 				}
-				for(String contx : contexts) {
-					if(contx != null)
-					   contextList.add(contx);
-				}
-				List<List<String>> documents_1 = Arrays.asList(attrList,contextList);
-				double tfidfscore = 0;
-		        for(List<String>  doclist : documents_1) {
-		        	List<Double> tfidfDocsList = new ArrayList<Double>();
-		        	for(String docs : doclist) {
-		        		tfidfscore = calculator.tfIdf(doclist, documents_1, docs);
-		        		System.out.println(docs+" ---- "+tfidfscore);
-		        		tfidfDocsList.add(tfidfscore);
-		        		
-		        	}
-		        	tfidfDocsVector.add(tfidfDocsList);
-		        }
+				HashMap<String,Double> attrTfIdfScores = getTdIdfVectors(attrDoc,calculator);
+				System.out.println(attrTfIdfScores);
 				
+				for(String contx : contexts) {
+					List<String> contextList = new ArrayList<String>();
+					if(contx != null) {
+					   contextList.add(contx);
+					}
+					contextDoc.add(contextList);
+				}
+				HashMap<String,Double> contextTfIdfScores = getTdIdfVectors(contextDoc,calculator);
+				System.out.println(contextTfIdfScores);
+					
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         
-
-       // List<List<Double>> tfidfDocsVector = new ArrayList<List<Double>>();
-        //TFIDFCalculator calculator = new TFIDFCalculator();
-        /*double tfidfscore = 0;
-        for(List<String>  doclist : documents) {
-        	List<Double> tfidfDocsList = new ArrayList<Double>();
-        	for(String docs : doclist) {
-        		tfidfscore = calculator.tfIdf(doclist, documents, docs);
-        		//System.out.println(docs+" ---- "+tfidfscore);
-        		tfidfDocsList.add(tfidfscore);
-        		
-        	}
-        	tfidfDocsVector.add(tfidfDocsList);
-        }*/
-        System.out.println(tfidfDocsVector);
+		
         calculator.getCosineSimilarity(tfidfDocsVector);
-        //double tfidf = calculator.tfIdf(doc1, documents, "ipsum");
-        //System.out.println("TF-IDF (ipsum) = " + tfidf);
+        
     }
 }
