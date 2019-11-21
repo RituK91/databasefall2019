@@ -55,7 +55,7 @@ public class DataPreProcessing {
 		            HashSet<String> headerRow = new HashSet<String>(); // attributes
 		            HashSet<String> metadata = new HashSet<String>(); // auxiliary metadata
 		            List<List<String>> datarows = new ArrayList<List<String>>();
-		            HashSet<List<String>> queries = new HashSet<List<String>>();
+		            List<String> queries = new ArrayList<String>();
 		            
 		            //Iterate and create the tuples. And if it is last iteration then it is a query.
 		            //jsonList.forEach( jsonobj -> parseJsonObject( (JSONObject) jsonobj , jsonList.size()) );
@@ -69,8 +69,9 @@ public class DataPreProcessing {
 		            	else if(i == jsonList.size() - 1) { // Getting all queries
 		            		Set<String> keys = temp.keySet();
 		            		for(String key : keys) {
-		            			List<String> q1 = new ArrayList<String>();
-		            			q1.add(key); q1.add(temp.get(key));
+		            			String q1 = key + "===" + temp.get(key);
+		            			/*List<String> q1 = new ArrayList<String>();
+		            			q1.add(key); q1.add(temp.get(key));*/
 		            			queries.add(q1);
 		            		}
 		            		
@@ -90,7 +91,7 @@ public class DataPreProcessing {
 		            System.out.println(headerRow+"----"+datarows+"----"+metadata+"----"+queries);
 		            
 		            String[] data1 = {String.join(":::",headerRow),String.join(":::",datarows.toString()),
-		            		String.join(":::",metadata),String.join(":::",queries.toString())};
+		            		String.join(":::",metadata),String.join(":::",queries)};
 		            writer.writeNext(data1);
 		            /*for(List<String> dataList : datarows) {
 		            	for(String str : dataList) {
