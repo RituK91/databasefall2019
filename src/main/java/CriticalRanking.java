@@ -6,7 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -120,6 +124,29 @@ public class CriticalRanking {
         	}
         	return tfidfScores;
         }
+        
+        public static HashMap<String, Double> sortByValue(HashMap<String, Double> hm) 
+        { 
+            // Create a list from elements of HashMap 
+            List<Map.Entry<String, Double> > list = 
+                   new LinkedList<Map.Entry<String, Double> >(hm.entrySet()); 
+      
+            // Sort the list 
+            Collections.sort(list, new Comparator<Map.Entry<String, Double> >() { 
+                public int compare(Map.Entry<String, Double> o1,  
+                                   Map.Entry<String, Double> o2) 
+                { 
+                    return (o1.getValue()).compareTo(o2.getValue()); 
+                } 
+            }); 
+              
+            // put data from sorted list to hashmap  
+            HashMap<String, Double> temp = new LinkedHashMap<String, Double>(); 
+            for (Map.Entry<String, Double> aa : list) { 
+                temp.put(aa.getKey(), aa.getValue()); 
+            } 
+            return temp; 
+        } 
 
         public static HashMap<String,Double> calculateTopicalScore(HashMap<String,Double> attrTfIdfScores, 
         		HashMap<String,Double> contextTfIdfScores,CriticalRanking calculator) {
@@ -172,9 +199,26 @@ public class CriticalRanking {
         	for(Map.Entry<String, Double> scoreEntry : topicalScores.entrySet()) {
         		double score = scoreEntry.getValue() + popScoreForAttr.get(scoreEntry.getKey());
         		criticalScoreMap.put(scoreEntry.getKey(), score);
-        	}
-        	
+        	}        	
         	return criticalScoreMap;
+        }
+        
+        public static void getMembersAndFacts(HashMap<String,Double> criticalScore) {
+        	HashMap<String,Double> sortedCrtiticalScores = sortByValue(criticalScore);
+        	
+        	System.out.println("Max score is .... "+sortedCrtiticalScores);
+        	int mapSize = sortedCrtiticalScores.size(); int counter = 0;
+        	for(Map.Entry<String, Double> scoreEntry : sortedCrtiticalScores.entrySet()) {
+        		List<String> facts = new ArrayList<String>(); String subjectCol = null; 
+        		counter++;
+        		if((counter) == mapSize) {
+        			System.out.println("Subject column "+scoreEntry.getKey());
+        			subjectCol = scoreEntry.getKey();
+        		}else if((counter+1) == mapSize || (counter+2) == mapSize) {
+        			System.out.println("Facts column "+scoreEntry.getKey());
+        			facts.add(scoreEntry.getKey());
+        		}
+        	}
         }
     
     public static void main(String[] args) {
@@ -195,7 +239,7 @@ public class CriticalRanking {
 				List<List<String>> queryDoc = new ArrayList<List<String>>();
 				
 				String[] allAttr = csvRecord.get(0).split(":::");
-				System.out.println(allAttr.length);
+				//System.out.println(allAttr.length);
 				String[] contexts = csvRecord.get(2).split(":::");
 				String[] queries = csvRecord.get(3).split(":::");
 				for(String attr : allAttr) {
@@ -232,7 +276,9 @@ public class CriticalRanking {
 				HashMap<String,Double> topicalScores = calculateTopicalScore(attrTfIdfScores,contextTfIdfScores,calculator);
 				HashMap<String,Double> popScoreForAttr = calculatePopularityScore(queryMap, attrTfIdfScores, queryTfIdfScores, calculator);
 				HashMap<String,Double> criticalScore = getCriticalScore(topicalScores,popScoreForAttr);
-				System.out.println(criticalScore);	
+				//System.out.println(criticalScore);	
+				
+				getMembersAndFacts(criticalScore);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
