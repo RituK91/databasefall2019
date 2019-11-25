@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -102,7 +103,7 @@ public class PivotEntity {
 				if(temp != null)
 					potentialPE.add(temp[index-1]);
 			}catch(ArrayIndexOutOfBoundsException e) {
-				System.out.println(" Exception here for "+data);
+				//System.out.println(" Exception here for "+data);
 				return null;
 			}
 			
@@ -129,6 +130,40 @@ public class PivotEntity {
 		}
 		TreeMap<String,Integer> sortedMap = new TreeMap<String,Integer>(freqMap);
 		return sortedMap;
+	}
+	
+	public static void dataForCarousels(String entity, String header, HashMap<String,String> subjectColumn, 
+			HashMap<String,String> factsColumn, String datarows) {
+		
+		String subjectCol = subjectColumn.get(header); //String[] facts = factsColumn.get(header).split(":::");
+		String[] datarow = datarows.split("],"); String[] headerList = header.split(":::");
+		List<String> facts = new ArrayList<String>(Arrays.asList(factsColumn.get(header).split(":::")));
+		List<String> dataList = new ArrayList<String>();
+		int subIndex = 0; int fact1 = 0; int fact2 = 0;
+		for(String data : datarow) {
+			String result = null;
+			if (data.contains("[")) {
+				result = data.replace("[", "");
+				//dataList.remove(data);
+				dataList.add(result);
+			}else {
+				dataList.add(data);
+			}
+				
+		}
+		
+		int counter = 0;
+		for(int i = 0; i < headerList.length; i++ ) {
+			counter++; 
+			if (headerList[i].equals(subjectCol))
+				subIndex = i;
+			else if(headerList[i].equals(facts.get(0)))
+				fact1 = i;
+			else if(headerList[i].equals(facts.get(1)))
+				fact2 = i;
+		}
+		System.out.println(subIndex+" "+fact1+" "+fact2);
+		//System.out.println(dataList.get(0));
 	}
 	
 	public static void main(String args[]) {
@@ -173,9 +208,10 @@ public class PivotEntity {
 				//System.out.println(queryMap.keySet());
 				
 				StringBuffer pivotEntityForDownward = entityForDownwardCarousel(contexts, queryMap);
-				//System.out.println("Pivot Entity "+pivotEntityForDownward);
+				//System.out.println("Downward Carousel Pivot Entity ---- "+pivotEntityForDownward);
 				String pivotEntityForSideway = pivotEntityForSideways(subjectColumn, csvRecord.get(0), csvRecord.get(1));
-				System.out.println(csvRecord.get(0)+" ---- "+pivotEntityForSideway);
+				//System.out.println("Sideward Carousel Pivot Entity ---- "+pivotEntityForSideway);
+				dataForCarousels(pivotEntityForSideway, csvRecord.get(0), subjectColumn, factsColumn, csvRecord.get(1));
 			}
 		}catch(IOException e) {
 			e.printStackTrace();
