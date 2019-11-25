@@ -40,7 +40,7 @@ public class DataPreProcessing {
         String[] csvheader = {"rh","R","A","Q"};
         writer.writeNext(csvheader);
         
-        File dir = new File(".//datasets");
+        File dir = new File(".//dataset1");
 		  File[] directoryListing = dir.listFiles();
 		  if (directoryListing != null) {
 		    for (File child : directoryListing) {
