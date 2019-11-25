@@ -1,0 +1,30 @@
+[
+  {
+    "Source": "Gartner",
+    "Date": "Q2 2018",
+    "Samsung": "19.3%",
+    "Huawei": "13.3%",
+    "Apple Inc.": "11.9%",
+    "Xiaomi": "8.8%",
+    "Oppo": "7.6%",
+    "Others": "39.0%",
+    "Reference": "[146]"
+  },
+  {
+    "Source": "IDC",
+    "Date": "Q2 2018",
+    "Samsung": "21.0%",
+    "Huawei": "15.9%",
+    "Apple Inc.": "12.1%",
+    "Xiaomi": "9.5%",
+    "Oppo": "8.6%",
+    "Others": "32.9%",
+    "Reference": "[147]"
+  },
+  {
+    "Page Title": "Smartphone",
+    "Table Caption": "Worldwide smartphones producers market share",
+    "Section Title": "Sales",
+    "url": "https://en.wikipedia.org/wiki/Smartphone"
+  }
+]
