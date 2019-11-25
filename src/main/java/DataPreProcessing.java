@@ -80,7 +80,7 @@ public class DataPreProcessing {
 		            		headerRow.addAll(temp.keySet()); // Getting all table headers
 		            		//System.out.println(temp.values());
 		            		for(String header : temp.keySet()) {
-		            			datarowslist.add(temp.get(header));
+		            			datarowslist.add(temp.get(header).replace("]", ""));
 		            		}
 		            		
 		            		datarows.add(datarowslist);
