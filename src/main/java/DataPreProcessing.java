@@ -40,11 +40,11 @@ public class DataPreProcessing {
         String[] csvheader = {"rh","R","A","Q"};
         writer.writeNext(csvheader);
         
-        File dir = new File(".//dataset1");
+        File dir = new File(".//datasets");
 		  File[] directoryListing = dir.listFiles();
 		  if (directoryListing != null) {
 		    for (File child : directoryListing) {
-		      System.out.println("Data appears here ... "+child);
+		      //System.out.println("Data appears here ... "+child);
 		      try (FileReader reader = new FileReader(child))
 		        {
 		            //Read JSON file

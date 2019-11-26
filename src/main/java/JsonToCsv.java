@@ -47,7 +47,7 @@ public class JsonToCsv
         writer.writeNext(csvheader);
         
 		//retrieve the files from data sets folder
-		File dir = new File(".//datasets");
+		File dir = new File(".//newdatasets");
 		  File[] directoryListing = dir.listFiles();
 		  if (directoryListing != null) 
 		  {
