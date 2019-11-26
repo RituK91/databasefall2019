@@ -77,6 +77,13 @@
 	    <artifactId>opencsv</artifactId>
 	    <version>4.4</version>
 	</dependency>
+	<!-- https://mvnrepository.com/artifact/net.sf.extjwnl/extjwnl -->
+	<dependency>
+    	<groupId>net.sf.extjwnl</groupId>
+    	<artifactId>extjwnl</artifactId>
+    	<version>1.6.4</version>
+	</dependency>
+   
 	
   </dependencies>
 </project>
