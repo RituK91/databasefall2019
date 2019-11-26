@@ -86,8 +86,8 @@ public class JsonToCsv
 		            queries.add(q1);
 		            metadata.add(m);
 		            //display metadata and queries
-		            System.out.println("Queries-->"+queries);
-		            System.out.println("Metadata-->"+metadata);
+		            System.out.println("Queries--->"+queries);
+		            System.out.println("Metadata--->"+metadata);
 		            
 		            //retrieve dataRows and headerRow
 					//for (int i = 0; i < ts; i++) 
