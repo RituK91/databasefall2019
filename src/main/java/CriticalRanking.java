@@ -1,4 +1,6 @@
 package main.java;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -17,6 +19,8 @@ import java.util.Map;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+
+import com.opencsv.CSVWriter;
 
 
 public class CriticalRanking {
@@ -203,13 +207,14 @@ public class CriticalRanking {
         	return criticalScoreMap;
         }
         
-        public static void getMembersAndFacts(HashMap<String,Double> criticalScore) {
+        public static void getMembersAndFacts(HashMap<String,Double> criticalScore, String header, CSVWriter writer) throws IOException {
         	HashMap<String,Double> sortedCrtiticalScores = sortByValue(criticalScore);
         	
         	System.out.println("Max score is .... "+sortedCrtiticalScores);
         	int mapSize = sortedCrtiticalScores.size(); int counter = 0;
+        	List<String> facts = new ArrayList<String>(); String subjectCol = null; 
         	for(Map.Entry<String, Double> scoreEntry : sortedCrtiticalScores.entrySet()) {
-        		List<String> facts = new ArrayList<String>(); String subjectCol = null; 
+        		
         		counter++;
         		if((counter) == mapSize) {
         			System.out.println("Subject column "+scoreEntry.getKey());
@@ -218,7 +223,11 @@ public class CriticalRanking {
         			System.out.println("Facts column "+scoreEntry.getKey());
         			facts.add(scoreEntry.getKey());
         		}
+        		
         	}
+        	String data[] = {header,subjectCol, String.join(":::", facts)};
+    		writer.writeNext(data);
+        	//writer.close();
         }
     
     public static void main(String[] args) {
@@ -227,11 +236,22 @@ public class CriticalRanking {
         CriticalRanking calculator = new CriticalRanking();
         
         Reader reader; 
+        FileWriter outputFile=null;
+        File file = new File(".//subjectAndFact.csv");
+		
+        try {
+			outputFile = new FileWriter(file);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        CSVWriter writer = new CSVWriter(outputFile);
+    	
 		try {
 			reader = Files.newBufferedReader(Paths.get(".//sample.csv"),Charset.forName("ISO-8859-1"));
 			CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT);
 			for (CSVRecord csvRecord : csvParser) {
-				if(csvRecord.getRecordNumber() == 1)
+				if(csvRecord.getRecordNumber() == 1 /*|| csvRecord.getRecordNumber() > 2*/)
 					continue;
 				
 				List<List<String>> attrDoc = new ArrayList<List<String>>();
@@ -278,8 +298,9 @@ public class CriticalRanking {
 				HashMap<String,Double> criticalScore = getCriticalScore(topicalScores,popScoreForAttr);
 				//System.out.println(criticalScore);	
 				
-				getMembersAndFacts(criticalScore);
+				getMembersAndFacts(criticalScore, csvRecord.get(0), writer);
 			}
+			writer.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
