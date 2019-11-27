@@ -67,7 +67,7 @@ public class JsonToCsv
 					JSONArray relation =(JSONArray) jo.get("relation");
 					//display table size
 					int ts=relation.size();
-					System.out.println(ts);
+					System.out.println("Table Size"+ts);
 				
 					//declaring the data structures to store each entity
 					HashSet<String> headerRow = new HashSet<String>();
@@ -81,7 +81,8 @@ public class JsonToCsv
 		            String textBeforeTable =(String) jo.get("textBeforeTable");
 		            String textAfterTable =(String) jo.get("textAfterTable");
 				//create query and metadata for each table
-		           String q1 =pageTitle+"---"+title+"---"+textBeforeTable+"---"+textAfterTable;
+		           int k=1;
+		           String q1 =pageTitle+"===1"+title+"===2"+textBeforeTable+"===3"+textAfterTable+"===4";
 		           String m = pageTitle+"---"+title;
 		            queries.add(q1);
 		            metadata.add(m);
@@ -90,25 +91,35 @@ public class JsonToCsv
 		            System.out.println("Metadata--->"+metadata);
 		            
 		            //retrieve dataRows and headerRow
-					//for (int i = 0; i < ts; i++) 
-					//{
-					//	List<String> datarowslist = new ArrayList<String>();
-		            //	HashMap<String,String> temp = (HashMap<String, String>) jo.get(i);
-		            //	int l=relation[i].size(); //to get size of elements inside table
-		            //	for(int j=0;j<l;j++)
-		            //	{
-					//			headerRow.add());
-		            //	}
-						
-					//}
-		            
-		            System.out.println(queries+"---"+metadata);
+					for (int i = 0; i <ts; i++) 
+					{
+		            	int l=((ArrayList) relation.get(i)).size(); //to get size of elements inside table
+		            	System.out.println("Column size"+l);
+		            	for(int j=0;j<l;j++)
+		            	{
+		            		JSONArray tem=(JSONArray)(relation.get(j));
+		            		int lt=tem.size();
+		            		String e=(String)tem.get(0);
+		            		headerRow.add(e);
+		            		System.out.print("\n"+headerRow+"\n");
+		            		//for(int n=1;n<lt;n++)
+		            		//{
+		            		//	String t=(String)tem.get(n);
+		            			//System.out.println(t);
+		            		//	datarows.add(t);
+		            		//	System.out.println(datarows);
+		            		//}
+		            	}
+		            		
+		            }
+		           
+		            System.out.println(headerRow+"---"+queries+"---"+metadata);
 		            String[] data1 = {String.join(":::",metadata),String.join(":::",queries)};
 		            
 		            writer.writeNext(data1);
 						
-				}	
-		    
+				
+				 }
 		
 				catch(FileNotFoundException e) 
 				{e.printStackTrace(); }
@@ -118,10 +129,12 @@ public class JsonToCsv
 				{e.printStackTrace(); }
 				catch(Exception e) 
 				{e.printStackTrace(); }
-				
-		    
-		  }
-		  }		
+		  	
+		    }
+		  }	
 	}
+		  
 }
+	
+
 
