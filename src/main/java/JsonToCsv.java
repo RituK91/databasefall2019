@@ -49,12 +49,16 @@ public class JsonToCsv
 		//retrieve the files from data sets folder
 		File dir = new File(".//newdatasets");
 		  File[] directoryListing = dir.listFiles();
+		  System.out.println(directoryListing.length);
+		  int count = 0;
 		  if (directoryListing != null) 
 		  {
 		    for (File child : directoryListing) 
 		    {
-		      System.out.println("info appears here..." + child);
-		
+		      //System.out.println("info appears here..." + child);
+		    	/*count++;
+		        if(count > 2)
+		        	continue; */
 				try(FileReader reader = new FileReader(child))
 				{
 					//parse the JSON files
@@ -63,11 +67,11 @@ public class JsonToCsv
 					//storing the details of each file in array
 					JSONObject jo = (JSONObject) obj;
 					//display table details
-					System.out.println(jo.get("relation"));
+					//System.out.println(jo.get("relation"));
 					JSONArray relation =(JSONArray) jo.get("relation");
 					//display table size
 					int ts=relation.size();
-					System.out.println("Table Size"+ts);
+					//System.out.println("Table Size"+ts);
 				
 					//declaring the data structures to store each entity
 					HashSet<String> headerRow = new HashSet<String>();
@@ -80,6 +84,9 @@ public class JsonToCsv
 		            String title =(String) jo.get("title");
 		            String textBeforeTable =(String) jo.get("textBeforeTable");
 		            String textAfterTable =(String) jo.get("textAfterTable");
+		            String tableType = (String) jo.get("tableType");
+		            /*if(tableType.equalsIgnoreCase("relation"))
+		            	System.out.println("True");*/
 				//create query and metadata for each table
 		           int k=1;
 		           String q1 =pageTitle+"===1"+title+"===2"+textBeforeTable+"===3"+textAfterTable+"===4";
@@ -87,21 +94,26 @@ public class JsonToCsv
 		            queries.add(q1);
 		            metadata.add(m);
 		            //display metadata and queries
-		            System.out.println("Queries--->"+queries);
-		            System.out.println("Metadata--->"+metadata);
+		            //System.out.println("Queries--->"+queries);
+		            //System.out.println("Metadata--->"+metadata);
 		            
 		            //retrieve dataRows and headerRow
-					for (int i = 0; i <ts; i++) 
+					for (int i = 0; i < ts; i++) 
 					{
-		            	int l=((ArrayList) relation.get(i)).size(); //to get size of elements inside table
-		            	System.out.println("Column size"+l);
-		            	for(int j=0;j<l;j++)
+						//System.out.println(relation.get(i));
+		            	int l=((ArrayList) relation.get(i)).size();//to get size of elements inside table
+		            	ArrayList<String> relationList = (ArrayList<String>) relation.get(i);
+		            	//System.out.println("Column size"+l);
+		            	for(int j=0;j< relationList.size() ;j++)
 		            	{
-		            		JSONArray tem=(JSONArray)(relation.get(j));
-		            		int lt=tem.size();
-		            		String e=(String)tem.get(0);
-		            		headerRow.add(e);
-		            		System.out.print("\n"+headerRow+"\n");
+		            		//System.out.println(relationList.get(0));
+		            		//System.out.println(relationList.get(j));
+		            		//JSONArray tem=(JSONArray)(relation.get(j));
+		            		//int lt=tem.size();
+		            		//String e=(String)tem.get(0);
+		            		
+		            		headerRow.add(relationList.get(0));
+		            		
 		            		//for(int n=1;n<lt;n++)
 		            		//{
 		            		//	String t=(String)tem.get(n);
@@ -110,15 +122,14 @@ public class JsonToCsv
 		            		//	System.out.println(datarows);
 		            		//}
 		            	}
-		            		
+		            	
 		            }
-		           
-		            System.out.println(headerRow+"---"+queries+"---"+metadata);
+					System.out.println(headerRow);	
+		            //System.out.println(headerRow+"---"+queries+"---"+metadata);
 		            String[] data1 = {String.join(":::",metadata),String.join(":::",queries)};
 		            
 		            writer.writeNext(data1);
-						
-				
+										
 				 }
 		
 				catch(FileNotFoundException e) 
