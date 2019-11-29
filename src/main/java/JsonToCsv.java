@@ -47,7 +47,7 @@ public class JsonToCsv
         writer.writeNext(csvheader);
         
 		//retrieve the files from data sets folder
-		File dir = new File(".//newdatasets");
+		File dir = new File(".//test");
 		  File[] directoryListing = dir.listFiles();
 		  System.out.println(directoryListing.length);
 		  int count = 0;
@@ -56,9 +56,9 @@ public class JsonToCsv
 		    for (File child : directoryListing) 
 		    {
 		      //System.out.println("info appears here..." + child);
-		    	/*count++;
-		        if(count > 2)
-		        	continue; */
+		    	//count++;
+		       // if(count > 2)
+		        //	continue; 
 				try(FileReader reader = new FileReader(child))
 				{
 					//parse the JSON files
@@ -71,13 +71,14 @@ public class JsonToCsv
 					JSONArray relation =(JSONArray) jo.get("relation");
 					//display table size
 					int ts=relation.size();
-					//System.out.println("Table Size"+ts);
+					System.out.println("Table Size:"+ts);
 				
 					//declaring the data structures to store each entity
 					HashSet<String> headerRow = new HashSet<String>();
 					HashSet<String> metadata = new HashSet<String>();
 					List<List<String>> datarows = new ArrayList<List<String>>();
-		            List<String> queries = new ArrayList<String>();
+					HashSet<String> tempRow=new HashSet<String>();
+		            HashSet<String> queries = new HashSet<String>();
 					
 		            //get information for queries
 		            String pageTitle =(String) jo.get("pageTitle");
@@ -100,31 +101,34 @@ public class JsonToCsv
 		            //retrieve dataRows and headerRow
 					for (int i = 0; i < ts; i++) 
 					{
-						//System.out.println(relation.get(i));
-		            	int l=((ArrayList) relation.get(i)).size();//to get size of elements inside table
+						System.out.println(relation.get(i));
 		            	ArrayList<String> relationList = (ArrayList<String>) relation.get(i);
-		            	//System.out.println("Column size"+l);
-		            	for(int j=0;j< relationList.size() ;j++)
+		            	int lt=relationList.size();
+		            	//System.out.println("Column size:"+lt);
+		            	
+		            	for(int j=0;j< lt ;j++)
 		            	{
-		            		//System.out.println(relationList.get(0));
-		            		//System.out.println(relationList.get(j));
-		            		//JSONArray tem=(JSONArray)(relation.get(j));
-		            		//int lt=tem.size();
-		            		//String e=(String)tem.get(0);
 		            		
 		            		headerRow.add(relationList.get(0));
 		            		
-		            		//for(int n=1;n<lt;n++)
-		            		//{
-		            		//	String t=(String)tem.get(n);
-		            			//System.out.println(t);
-		            		//	datarows.add(t);
-		            		//	System.out.println(datarows);
-		            		//}
-		            	}
+		            		//to get first row of data for test
+		            		
+		            		tempRow.add(relationList.get(1));
+		            		//to get each row of data
+		            		if(j!=0)
+		            		//System.out.println(relationList.get(j));
+		            			tempRow.add(relationList.get(j)); //adding data in HashSet
+		            		
+		            	} 
 		            	
 		            }
-					System.out.println(headerRow);	
+					
+					//datarows.add(tempRow);
+					System.out.println(headerRow);
+					System.out.println(tempRow);
+					System.out.println("All data rowise:\n");
+					System.out.println(datarows);
+					
 		            //System.out.println(headerRow+"---"+queries+"---"+metadata);
 		            String[] data1 = {String.join(":::",metadata),String.join(":::",queries)};
 		            
