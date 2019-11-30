@@ -144,7 +144,7 @@ public class PivotEntity {
 	}
 	
 	public static void dataForCarousels(Object entity, String header, HashMap<String,String> subjectColumn, 
-			HashMap<String,String> factsColumn, String datarows, CSVWriter writer) {
+			HashMap<String,String> factsColumn, String datarows, CSVWriter writer, String contexts, String queries) {
 		
 		String subjectCol = subjectColumn.get(header); //String[] facts = factsColumn.get(header).split(":::");
 		String[] datarow = datarows.split("],"); String[] headerList = header.split(":::");
@@ -197,7 +197,8 @@ public class PivotEntity {
 		System.out.println("================================");
 		
 		if(entity != null) {
-			String data[] = {entity.toString(), String.join(":::", factList1), String.join(":::", factList2), String.join(":::", subList)};
+			String data[] = {entity.toString(), String.join(":::", factList1), String.join(":::", factList2), 
+					String.join(":::", subList), contexts, queries};
 			writer.writeNext(data);
 		}
 		
@@ -261,8 +262,10 @@ public class PivotEntity {
 				//System.out.println("Downward Carousel Pivot Entity ---- "+pivotEntityForDownward);
 				String pivotEntityForSideway = pivotEntityForSideways(subjectColumn, csvRecord.get(0), csvRecord.get(1));
 				//System.out.println("Sideward Carousel Pivot Entity ---- "+pivotEntityForSideway);
-				dataForCarousels(pivotEntityForDownward, csvRecord.get(0), subjectColumn, factsColumn, csvRecord.get(1), writer1);
-				dataForCarousels(pivotEntityForSideway, csvRecord.get(0), subjectColumn, factsColumn, csvRecord.get(1), writer2);
+				dataForCarousels(pivotEntityForDownward, csvRecord.get(0), subjectColumn, factsColumn, 
+						csvRecord.get(1), writer1, csvRecord.get(2), csvRecord.get(3));
+				dataForCarousels(pivotEntityForSideway, csvRecord.get(0), subjectColumn, factsColumn, 
+						csvRecord.get(1), writer2, csvRecord.get(2), csvRecord.get(3));
 			}
 			writer1.close();
 			writer2.close();

@@ -11,7 +11,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.json.simple.parser.ParseException;
 
@@ -23,6 +25,15 @@ import org.json.simple.parser.JSONParser;
 
 public class JsonToCsv 
 {
+	public static List<String> getDataRows(HashMap<Integer,ArrayList<String>> relationMap, int index) {
+		String relationData = null; List<String> relationList = new ArrayList<String>();
+		for(Entry<Integer, ArrayList<String>> hEntry : relationMap.entrySet()) {
+			relationList.add(hEntry.getValue().get(index));
+			//relationData = hEntry.getValue().get(index);
+			//System.out.println(relationData);
+		}
+		return relationList;
+	}
 
 	public static void main(String[] args) 
 	{
@@ -47,7 +58,7 @@ public class JsonToCsv
         writer.writeNext(csvheader);
         
 		//retrieve the files from data sets folder
-		File dir = new File(".//test");
+		File dir = new File(".//newdatasets");
 		  File[] directoryListing = dir.listFiles();
 		  System.out.println(directoryListing.length);
 		  int count = 0;
@@ -56,9 +67,9 @@ public class JsonToCsv
 		    for (File child : directoryListing) 
 		    {
 		      //System.out.println("info appears here..." + child);
-		    	//count++;
-		       // if(count > 2)
-		        //	continue; 
+		    	/*count++;
+		        if(count > 2)
+		        	continue; */
 				try(FileReader reader = new FileReader(child))
 				{
 					//parse the JSON files
@@ -71,12 +82,13 @@ public class JsonToCsv
 					JSONArray relation =(JSONArray) jo.get("relation");
 					//display table size
 					int ts=relation.size();
-					System.out.println("Table Size:"+ts);
+					//System.out.println("Table Size:"+ts);
 				
 					//declaring the data structures to store each entity
-					HashSet<String> headerRow = new HashSet<String>();
+					List<String> headerRow = new ArrayList<String>();
 					HashSet<String> metadata = new HashSet<String>();
-					List<List<String>> datarows = new ArrayList<List<String>>();
+					List<String> dataRow = new ArrayList<String>();
+					List<List<String>> allDatarows = new ArrayList<List<String>>();
 					HashSet<String> tempRow=new HashSet<String>();
 		            HashSet<String> queries = new HashSet<String>();
 					
@@ -89,51 +101,68 @@ public class JsonToCsv
 		            /*if(tableType.equalsIgnoreCase("relation"))
 		            	System.out.println("True");*/
 				//create query and metadata for each table
-		           int k=1;
-		           String q1 =pageTitle+"===1"+title+"===2"+textBeforeTable+"===3"+textAfterTable+"===4";
-		           String m = pageTitle+"---"+title;
-		            queries.add(q1);
-		            metadata.add(m);
+		           
+		            queries.add(pageTitle+"===1"); queries.add(title+"===2");
+		            queries.add(textAfterTable+"===3"); 
+		            metadata.add(pageTitle); metadata.add(title);
 		            //display metadata and queries
 		            //System.out.println("Queries--->"+queries);
 		            //System.out.println("Metadata--->"+metadata);
-		            
+		            HashMap<Integer,ArrayList<String>> relationMap = new HashMap<Integer,ArrayList<String>>();
+		            int innerListSize = 0;
 		            //retrieve dataRows and headerRow
 					for (int i = 0; i < ts; i++) 
 					{
-						System.out.println(relation.get(i));
+						//System.out.println(relation.get(i));
 		            	ArrayList<String> relationList = (ArrayList<String>) relation.get(i);
-		            	int lt=relationList.size();
+		            	innerListSize = relationList.size();
 		            	//System.out.println("Column size:"+lt);
+		            	relationMap.put(i, relationList);
 		            	
-		            	for(int j=0;j< lt ;j++)
-		            	{
-		            		
+		            	/*for(int j=0;j< relationList.size() ;j++)
+		            	{		            		
 		            		headerRow.add(relationList.get(0));
 		            		
 		            		//to get first row of data for test
-		            		
-		            		tempRow.add(relationList.get(1));
+		            		//System.out.println(relationList.get(1));
+		            		//tempRow.add(relationList.get(1));
 		            		//to get each row of data
-		            		if(j!=0)
+		            		if(j!=0) {
+		            			//System.out.println(relationList.get(j));
+		            			//tempRow.add(relationList.get(j)); 
+		            		}
 		            		//System.out.println(relationList.get(j));
-		            			tempRow.add(relationList.get(j)); //adding data in HashSet
+		            			//adding data in HashSet
 		            		
-		            	} 
+		            	} */
 		            	
 		            }
 					
+					//List<String> dataRow = new ArrayList<String>();
+					for(int j = 0; j < innerListSize ; j++) {
+						if(j == 0)
+							headerRow = getDataRows(relationMap, j);
+						else {
+							dataRow = getDataRows(relationMap, j); allDatarows.add(dataRow);
+						}
+						System.out.println(headerRow);
+					}
+					//System.out.println(relationMap);
+					System.out.println(headerRow.size());
+					System.out.println(allDatarows);
+					
 					//datarows.add(tempRow);
-					System.out.println(headerRow);
-					System.out.println(tempRow);
-					System.out.println("All data rowise:\n");
-					System.out.println(datarows);
+					//System.out.println(headerRow);
+					//System.out.println(tempRow);
+					//System.out.println("All data rowise:\n");
+					//System.out.println(datarows);
 					
 		            //System.out.println(headerRow+"---"+queries+"---"+metadata);
-		            String[] data1 = {String.join(":::",metadata),String.join(":::",queries)};
+		            String[] data1 = {String.join(":::",headerRow),String.join(":::",allDatarows.toString()),
+		            		String.join(":::",metadata),String.join(":::",queries)};
 		            
 		            writer.writeNext(data1);
-										
+		            System.out.println("==================================");					
 				 }
 		
 				catch(FileNotFoundException e) 
@@ -146,8 +175,17 @@ public class JsonToCsv
 				{e.printStackTrace(); }
 		  	
 		    }
-		  }	
+		    
+		  }
+		  try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		  
 	}
+	
 		  
 }
 	

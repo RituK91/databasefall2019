@@ -180,8 +180,7 @@ public class CriticalRanking {
         		double cosinescore = 0; double sum = 0; double psum = 0;
         		List<Double> attrList = new ArrayList<Double>();
         		attrList.add(attrEntry.getValue());
-        				
-        		
+        				        		
         		for(Map.Entry<String, Double> queryEntry : queryTfIdfScores.entrySet()) {
         			List<Double> queryList = new ArrayList<Double>();
         			queryList.add(queryEntry.getValue());
