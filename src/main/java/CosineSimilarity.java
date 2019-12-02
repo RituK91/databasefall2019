@@ -6,21 +6,21 @@ public class CosineSimilarity {
 
     /**
      * Method to calculate cosine similarity between two documents.
-     * @param docVector1 : document vector 1 (a)
-     * @param docVector2 : document vector 2 (b)
+     * @param tfidfVector1 : tfidf vector 1 (a)
+     * @param tfidfVector2 : tfidf vector 2 (b)
      * @return 
      */
-    public double cosineSimilarity(List<Double> docVector1, List<Double> docVector2) {
+    public double cosineSimilarity(List<Double> tfidfVector1, List<Double> tfidfVector2) {
         double dotProduct = 0.0;
         double magnitude1 = 0.0;
         double magnitude2 = 0.0;
         double cosineSimilarity = 0.0;
 
-        for (int i = 0; i < docVector1.size(); i++) //docVector1 and docVector2 must be of same length
+        for (int i = 0; i < tfidfVector1.size(); i++) //docVector1 and docVector2 must be of same length
         {
-            dotProduct += docVector1.get(i) * docVector2.get(i);  //a.b
-            magnitude1 += Math.pow(docVector1.get(i), 2);  //(a^2)
-            magnitude2 += Math.pow(docVector2.get(i), 2); //(b^2)
+            dotProduct += tfidfVector1.get(i) * tfidfVector2.get(i);  //a.b
+            magnitude1 += Math.pow(tfidfVector1.get(i), 2);  //(a^2)
+            magnitude2 += Math.pow(tfidfVector2.get(i), 2); //(b^2)
         }
 
         magnitude1 = Math.sqrt(magnitude1);//sqrt(a^2)
