@@ -19,6 +19,7 @@ import org.json.simple.parser.ParseException;
 
 import com.opencsv.CSVWriter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -40,7 +41,7 @@ public class JsonToCsv
 		JSONParser prsr=new JSONParser();
 		
 		FileWriter outputFile=null;
-        File file = new File(".//sample1.csv");
+        File file = new File(".//sample2.csv");
 		
         try 
         {
@@ -60,15 +61,15 @@ public class JsonToCsv
 		//retrieve the files from data sets folder
 		File dir = new File(".//newdatasets");
 		  File[] directoryListing = dir.listFiles();
-		  System.out.println(directoryListing.length);
+		  //System.out.println(directoryListing.length);
 		  int count = 0;
 		  if (directoryListing != null) 
 		  {
 		    for (File child : directoryListing) 
 		    {
 		      //System.out.println("info appears here..." + child);
-		    	/*count++;
-		        if(count > 2)
+		    /*	count++;
+		        if(count > 4)
 		        	continue; */
 				try(FileReader reader = new FileReader(child))
 				{
@@ -97,14 +98,28 @@ public class JsonToCsv
 		            String title =(String) jo.get("title");
 		            String textBeforeTable =(String) jo.get("textBeforeTable");
 		            String textAfterTable =(String) jo.get("textAfterTable");
+		            String[] textAfterTableArr = textAfterTable.split(" ");
 		            String tableType = (String) jo.get("tableType");
 		            /*if(tableType.equalsIgnoreCase("relation"))
 		            	System.out.println("True");*/
 				//create query and metadata for each table
 		           
-		            queries.add(pageTitle+"===1"); queries.add(title+"===2");
-		            queries.add(textAfterTable+"===3"); 
-		            metadata.add(pageTitle); metadata.add(title);
+		            if(pageTitle != null && !pageTitle.isEmpty() ) {
+		            	queries.add(pageTitle+"===1"); 
+		            	metadata.add(pageTitle);
+		            }
+		            	
+		            if(title != null && !title.isEmpty()) {
+		            	queries.add(title+"===2");
+		            	metadata.add(title);
+		            }
+		            	
+		            System.out.println("Inspected Value ------"+textAfterTableArr[0].length());
+		            if(textAfterTableArr[0] != null && !StringUtils.isBlank(textAfterTableArr[0].trim()))
+		            	queries.add(textAfterTableArr[0]+"===3"); 
+		            if(textAfterTableArr[1] != null && !textAfterTableArr[1].isEmpty() && !textAfterTableArr[1].contains(" "))
+		            	queries.add(textAfterTableArr[1]+"===4");
+		            		             
 		            //display metadata and queries
 		            //System.out.println("Queries--->"+queries);
 		            //System.out.println("Metadata--->"+metadata);
@@ -145,11 +160,11 @@ public class JsonToCsv
 						else {
 							dataRow = getDataRows(relationMap, j); allDatarows.add(dataRow);
 						}
-						System.out.println(headerRow);
+						//System.out.println(headerRow);
 					}
 					//System.out.println(relationMap);
-					System.out.println(headerRow.size());
-					System.out.println(allDatarows);
+					//System.out.println(headerRow.size());
+					//System.out.println(allDatarows);
 					
 					//datarows.add(tempRow);
 					//System.out.println(headerRow);

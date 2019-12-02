@@ -3,6 +3,7 @@ package main.java;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +27,10 @@ import java.util.Set;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.opencsv.CSVWriter;
 
@@ -117,14 +123,108 @@ public class CarouselTitle {
 	    
 	}
 	
-    private static void generateTitlesForDownward(CSVParser dccsvParser, HashMap<Integer,String[]> contextMap,
-    		HashMap<Integer,String[]> queryMap, HashMap<Integer,String> headerMap, Dictionary dictionary, CSVWriter writer1) 
+    private static void generateTitlesForDownward(XSSFSheet sheet1, HashMap<Integer,String[]> contextMap,
+    		HashMap<Integer,String[]> queryMap, HashMap<Integer,String> headerMap, Dictionary dictionary, XSSFSheet sheetToWrite) 
     				throws JWNLException, IOException {
 		
-    	String header[] = {"Pivot Entity", "Carousel Title", "Facts Values", "Members", "Context", "Queries", "Header"};
-		writer1.writeNext(header);
+    	/*String header[] = {"Pivot Entity", "Carousel Title", "Fact 1", "Fact 2", "Members", "Context", "Queries", "Header"};
+		writer1.writeNext(header);*/
 		
-		for(CSVRecord dc : dccsvParser) {
+		Iterator<Row> rowIterator = sheet1.iterator();
+		int rowNumber = 0;
+		
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0) {
+				rowNumber++;
+				continue;
+			}
+			System.out.println("Row number is ---- "+row.getRowNum());
+			Row rowToWrite = sheetToWrite.createRow(row.getRowNum()-1);
+			String[] contextArr = contextMap.get(row.getRowNum());
+			//System.out.println(contextArr[1]);
+			
+			String[] queries = queryMap.get(row.getRowNum());
+			String attributes = headerMap.get(row.getRowNum());
+			
+			LinkedHashMap<String,String> queryMap1 = new LinkedHashMap<String,String>();
+			
+			for(String query : queries) {
+				//List<String> queryList = new ArrayList<String>();
+				int index = query.indexOf("===");
+				
+				queryMap1.put(query.substring(0, index), query.substring(index+3));
+			}
+			
+			Iterator<Cell> cellIterator = row.cellIterator();
+			String header = null; String penitity = null; String fact1 = null;
+			String fact2 = null; String member = null; String context = null;
+			String queryStr = null;
+			int cellNumber = 0;
+
+			while (cellIterator.hasNext()) {
+				Cell cell = cellIterator.next();
+				if(cellNumber == 0) {
+					penitity = cell.toString();
+				}else if(cellNumber == 1) {
+					fact1 = cell.toString();
+				}else if(cellNumber == 2) {
+					fact2 = cell.toString();
+				}else if(cellNumber == 3) {
+					member = cell.toString();
+				}else if(cellNumber == 4) {
+					context = cell.toString();
+				}else if(cellNumber == 5) {
+					queryStr = cell.toString();
+				}
+				cellNumber++;
+			}
+			String[] members = member.split(":::");
+			
+			HashSet<String> hypernymForSub = new HashSet<String>();
+			
+			for(String m : members) {
+				IndexWord indexWord = dictionary.getIndexWord(POS.NOUN, m);
+				//System.out.println(indexWord);
+				if(indexWord != null) {
+					List<String> hypernym = findHypernyms(indexWord);
+					hypernymForSub.addAll(hypernym);
+				}				
+			}
+			System.out.println("Downward -----");
+			String title = getScores(contextArr, queryMap1, hypernymForSub);
+			
+			Cell entityCell = rowToWrite.createCell(0);
+			entityCell.setCellValue(penitity);
+			
+			Cell titleCell = rowToWrite.createCell(1);
+			titleCell.setCellValue(title);
+			
+			Cell fact1Cell = rowToWrite.createCell(2);
+			fact1Cell.setCellValue(fact1);
+			
+			Cell fact2Cell = rowToWrite.createCell(3);
+			fact2Cell.setCellValue(fact2);
+			
+			Cell SubCell = rowToWrite.createCell(4);
+			SubCell.setCellValue(member);
+			
+			Cell contxtCell = rowToWrite.createCell(5);
+			contxtCell.setCellValue(context);
+			
+			Cell queryCell = rowToWrite.createCell(6);
+			queryCell.setCellValue(queryStr);
+			
+			Cell attrCell = rowToWrite.createCell(7);
+			attrCell.setCellValue(attributes);
+			
+			/*System.out.println(dc.get(0)+"--------"+title);
+			String data[] = {dc.get(0), title, dc.get(1), dc.get(2), dc.get(3), dc.get(4), dc.get(5), attributes};
+			writer1.writeNext(data);*/
+		}
+		
+		
+		/*for(CSVRecord dc : dccsvParser) {
 			//System.out.println("DC RN "+dc.getRecordNumber());
 			
 			String[] contextArr = contextMap.get((int)dc.getRecordNumber());
@@ -157,28 +257,38 @@ public class CarouselTitle {
 			System.out.println("Downward -----");
 			String title = getScores(contextArr, queryMap1, hypernymForSub);
 			System.out.println(dc.get(0)+"--------"+title);
-			String data[] = {dc.get(0), title, dc.get(1), dc.get(2), dc.get(4), dc.get(5), attributes};
+			String data[] = {dc.get(0), title, dc.get(1), dc.get(2), dc.get(3), dc.get(4), dc.get(5), attributes};
 			writer1.writeNext(data);
-		}
+		}*/
 		
 		System.out.println("========================");
 		
 	}
 
-	private static void generateTitlesForSideward(CSVParser sccsvParser, HashMap<Integer,String[]> contextMap, 
-			HashMap<Integer,String[]> queryMap, HashMap<Integer,String> headerMap, Dictionary dictionary, CSVWriter writer2) 
+	private static void generateTitlesForSideward(XSSFSheet sheet2, HashMap<Integer,String[]> contextMap, 
+			HashMap<Integer,String[]> queryMap, HashMap<Integer,String> headerMap, Dictionary dictionary, XSSFSheet sheetToWrite1) 
 					throws JWNLException, IOException {
 		
-		String header[] = {"Pivot Entity", "Carousel Title", "Facts Values", "Members", "Context", "Queries", "Header"};
-		writer2.writeNext(header);
+		/*String header[] = {"Pivot Entity", "Carousel Title", "Fact 1", "Fact 2", "Members", "Context", "Queries", "Header"};
+		writer2.writeNext(header);*/
 		
-		for(CSVRecord dc : sccsvParser) {
-			
-			String[] contextArr = contextMap.get((int)dc.getRecordNumber());
+		
+		Iterator<Row> rowIterator = sheet2.iterator();
+		int rowNumber = 0;
+		
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0) {
+				rowNumber++;
+				continue;
+			}
+			System.out.println("Row number is ---- "+row.getRowNum());
+			Row rowToWrite = sheetToWrite1.createRow(row.getRowNum()-1);
+			String[] contextArr = contextMap.get(row.getRowNum());
 			//System.out.println(contextArr[1]);
 			
-			String[] queries = queryMap.get((int)dc.getRecordNumber());
-			String attributes = headerMap.get((int)dc.getRecordNumber());
+			String[] queries = queryMap.get(row.getRowNum());
+			String attributes = headerMap.get(row.getRowNum());
 			
 			LinkedHashMap<String,String> queryMap1 = new LinkedHashMap<String,String>();
 			
@@ -189,9 +299,31 @@ public class CarouselTitle {
 				queryMap1.put(query.substring(0, index), query.substring(index+3));
 			}
 			
-			//System.out.println(queryMap1);
+			Iterator<Cell> cellIterator = row.cellIterator();
+			String header = null; String penitity = null; String fact1 = null;
+			String fact2 = null; String member = null; String context = null;
+			String queryStr = null;
+			int cellNumber = 0;
+
+			while (cellIterator.hasNext()) {
+				Cell cell = cellIterator.next();
+				if(cellNumber == 0) {
+					penitity = cell.toString();
+				}else if(cellNumber == 1) {
+					fact1 = cell.toString();
+				}else if(cellNumber == 2) {
+					fact2 = cell.toString();
+				}else if(cellNumber == 3) {
+					member = cell.toString();
+				}else if(cellNumber == 4) {
+					context = cell.toString();
+				}else if(cellNumber == 5) {
+					queryStr = cell.toString();
+				}
+				cellNumber++;
+			}
+			String[] members = member.split(":::");
 			
-			String[] members = dc.get(1).split(":::");
 			HashSet<String> hypernymForSub = new HashSet<String>();
 			
 			for(String m : members) {
@@ -200,14 +332,34 @@ public class CarouselTitle {
 				if(indexWord != null) {
 					List<String> hypernym = findHypernyms(indexWord);
 					hypernymForSub.addAll(hypernym);
-				}
-				
+				}				
 			}
-			System.out.println("Sideway -------");
+			System.out.println("Sideward -----");
 			String title = getScores(contextArr, queryMap1, hypernymForSub);
-			System.out.println(dc.get(0)+"--------"+title);
-			String data[] = {dc.get(0), title, dc.get(1), dc.get(2), dc.get(4), dc.get(5), attributes};
-			writer2.writeNext(data);
+			
+			Cell entityCell = rowToWrite.createCell(0);
+			entityCell.setCellValue(penitity);
+			
+			Cell titleCell = rowToWrite.createCell(1);
+			titleCell.setCellValue(title);
+			
+			Cell fact1Cell = rowToWrite.createCell(2);
+			fact1Cell.setCellValue(fact1);
+			
+			Cell fact2Cell = rowToWrite.createCell(3);
+			fact2Cell.setCellValue(fact2);
+			
+			Cell SubCell = rowToWrite.createCell(4);
+			SubCell.setCellValue(member);
+			
+			Cell contxtCell = rowToWrite.createCell(5);
+			contxtCell.setCellValue(context);
+			
+			Cell queryCell = rowToWrite.createCell(6);
+			queryCell.setCellValue(queryStr);
+			
+			Cell attrCell = rowToWrite.createCell(7);
+			attrCell.setCellValue(attributes);
 		}
 		
 		System.out.println("========================");
@@ -374,7 +526,7 @@ public class CarouselTitle {
 		
 		try {
 			
-			FileWriter outputFile1=null; FileWriter outputFile2=null;
+			/*FileWriter outputFile1=null; FileWriter outputFile2=null;
 	        File file1 = new File(".//DownwardCarousel.csv");
 	        File file2 = new File(".//SidewardCarousel.csv");
 			
@@ -384,8 +536,88 @@ public class CarouselTitle {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-	        CSVWriter writer1 = new CSVWriter(outputFile1); CSVWriter writer2 = new CSVWriter(outputFile2);
-			dcreader = Files.newBufferedReader(Paths.get(".//dataForDownwardC.csv"),Charset.forName("ISO-8859-1"));
+	        CSVWriter writer1 = new CSVWriter(outputFile1); CSVWriter writer2 = new CSVWriter(outputFile2);*/
+	        
+	        //========================================================================================
+	      //===============Data For Downward Carousel=================
+			FileInputStream fileToWrite = new FileInputStream(new File(".//DownwardCarousel.xlsx"));
+			XSSFWorkbook workbookToWrite = new XSSFWorkbook(fileToWrite); 
+			XSSFSheet sheetToWrite = workbookToWrite.getSheetAt(0);
+	        FileOutputStream outFile = new FileOutputStream(new File(".//DownwardCarousel.xlsx"));
+	        
+	      //===============Data For Sideward Carousel=================
+	        FileInputStream fileToWrite1 = new FileInputStream(new File(".//SidewardCarousel.xlsx"));
+			XSSFWorkbook workbookToWrite1 = new XSSFWorkbook(fileToWrite1); 
+			XSSFSheet sheetToWrite1 = workbookToWrite1.getSheetAt(0);
+	        FileOutputStream outFile1 = new FileOutputStream(new File(".//SidewardCarousel.xlsx"));
+	        
+	        FileInputStream mainfile = new FileInputStream(new File(".//TestSample.xlsx"));
+	        FileInputStream dcfile = new FileInputStream(new File(".//dataForDownwardC_1.xlsx"));	        
+	        FileInputStream scfile = new FileInputStream(new File(".//dataForSidewardC_1.xlsx"));
+
+			// Create Workbook instance holding reference to .xlsx file
+			XSSFWorkbook workbook = new XSSFWorkbook(mainfile);
+			XSSFWorkbook workbook1 = new XSSFWorkbook(dcfile);
+			XSSFWorkbook workbook2 = new XSSFWorkbook(scfile);
+
+			// Get first/desired sheet from the workbook
+			XSSFSheet sheet = workbook.getSheetAt(0);
+			XSSFSheet sheet1 = workbook1.getSheetAt(0);
+			XSSFSheet sheet2 = workbook2.getSheetAt(0);
+			
+			Iterator<Row> rowIterator = sheet.iterator();
+			Iterator<Row> rowIterator1 = sheet1.iterator();
+			Iterator<Row> rowIterator2 = sheet2.iterator();
+			int rowNumber = 0;
+			
+			
+			JWNL.initialize(new FileInputStream(".//properties.xml")); 
+			final Dictionary dictionary = Dictionary.getInstance();
+			HashMap<Integer,String[]> contextMap = new HashMap<Integer,String[]>();
+			HashMap<Integer,String[]> queryMap = new HashMap<Integer,String[]>();
+			HashMap<Integer,String> headerMap = new HashMap<Integer,String>();
+			
+			while (rowIterator.hasNext()) {
+				Row row = rowIterator.next();
+				if (row.getRowNum() == 0) {
+					rowNumber++;
+					continue;
+				}
+				
+				String context = null; String queries = null;
+						
+				Iterator<Cell> cellIterator = row.cellIterator();
+				String header = null;
+				int cellNumber = 0;
+				
+				while (cellIterator.hasNext()) {
+					Cell cell = cellIterator.next();
+					if(cellNumber == 2) {
+						context = cell.toString();
+					}else if(cellNumber == 3) {
+						queries = cell.toString();
+					}else if(cellNumber == 0) {
+						header = cell.toString();
+					}
+					cellNumber++;
+				}
+				contextMap.put(row.getRowNum(), context.split(":::"));
+				queryMap.put(row.getRowNum(), queries.split(":::"));
+				headerMap.put(row.getRowNum(), header);
+				rowNumber++;
+				
+				
+			}
+			
+			generateTitlesForDownward(sheet1, contextMap, queryMap, headerMap, dictionary, sheetToWrite);
+			generateTitlesForSideward(sheet2, contextMap, queryMap, headerMap, dictionary, sheetToWrite1);
+	        
+			workbookToWrite.write(outFile);
+			workbookToWrite1.write(outFile1);
+	        
+	        
+	        
+			/*dcreader = Files.newBufferedReader(Paths.get(".//dataForDownwardC.csv"),Charset.forName("ISO-8859-1"));
 			screader = Files.newBufferedReader(Paths.get(".//dataForSidewardC.csv"),Charset.forName("ISO-8859-1"));
 			mainreader = Files.newBufferedReader(Paths.get(".//sample.csv"),Charset.forName("ISO-8859-1"));
 			CSVParser dccsvParser = new CSVParser(dcreader, CSVFormat.DEFAULT);
@@ -409,7 +641,7 @@ public class CarouselTitle {
 			generateTitlesForDownward(dccsvParser, contextMap, queryMap, headerMap, dictionary, writer1);
 			generateTitlesForSideward(sccsvParser, contextMap, queryMap, headerMap, dictionary, writer2);
 			
-			writer1.close(); writer2.close();
+			writer1.close(); writer2.close();*/
 			//extractNounPhrases(sentence);
 		}catch(IOException e) {
 			e.printStackTrace();
