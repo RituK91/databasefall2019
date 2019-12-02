@@ -30,6 +30,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.opencsv.CSVWriter;
 
+/**
+ * 
+ * Calculates the critical ranking score for each attributes.
+ * Based on the score select members and facts.
+ *
+ */
 public class CriticalRanking {
 	/**
 	 * @param doc  list of strings
