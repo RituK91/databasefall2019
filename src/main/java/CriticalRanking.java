@@ -30,6 +30,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.opencsv.CSVWriter;
 
+/**
+ * 
+ * Calculates the critical ranking score for each attributes.
+ * Based on the score select members and facts.
+ *
+ */
 public class CriticalRanking {
 	/**
 	 * @param doc  list of strings
@@ -273,10 +279,10 @@ public class CriticalRanking {
 			// Get first/desired sheet from the workbook
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			
-			FileInputStream fileToWrite = new FileInputStream(new File(".//subjectAndFact_2.xlsx"));
+			FileInputStream fileToWrite = new FileInputStream(new File("./testFolder/subFact.xlsx"));
 			XSSFWorkbook workbookToWrite = new XSSFWorkbook(fileToWrite); 
 			XSSFSheet sheetToWrite = workbookToWrite.getSheetAt(0);
-	        FileOutputStream outFile = new FileOutputStream(new File(".//subjectAndFact_2.xlsx"));
+	        FileOutputStream outFile = new FileOutputStream(new File("./testFolder/subFact.xlsx"));
 	        
 			Iterator<Row> rowIterator = sheet.iterator();
 			int rowNumber = 0;
@@ -288,7 +294,7 @@ public class CriticalRanking {
 					continue;
 				}
 				
-				Row rowToWrite = sheetToWrite.createRow(row.getRowNum());
+				Row rowToWrite = sheetToWrite.createRow(row.getRowNum()-1);
 				//System.out.println("Row Number ---- "+row.getRowNum());
 				List<List<String>> attrDoc = new ArrayList<List<String>>();
 				List<List<String>> contextDoc = new ArrayList<List<String>>();
@@ -356,9 +362,10 @@ public class CriticalRanking {
 				HashMap<String, Double> criticalScore = getCriticalScore(topicalScores, popScoreForAttr);
 				getMembersAndFacts(criticalScore, header, rowToWrite);
 				workbookToWrite.write(outFile);
+				
 				rowNumber++;
 			}
-
+			workbookToWrite.close();
 			/*
 			 * reader =
 			 * Files.newBufferedReader(Paths.get(".//FinalTestSample.csv"),Charset.forName(

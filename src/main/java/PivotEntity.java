@@ -255,7 +255,7 @@ public class PivotEntity {
 	        //=============================================================================================
 	        
 	        FileInputStream infile = new FileInputStream(new File(".//TestSample.xlsx"));
-	        FileInputStream subFactfile = new FileInputStream(new File(".//subjectAndFact_2.xlsx"));
+	        FileInputStream subFactfile = new FileInputStream(new File("./testFolder/subFact.xlsx"));
 
 			// Create Workbook instance holding reference to .xlsx file
 			XSSFWorkbook workbook = new XSSFWorkbook(infile);
@@ -266,16 +266,16 @@ public class PivotEntity {
 			XSSFSheet sheet1 = workbook1.getSheetAt(0);
 			
 			//===============Data For Downward Carousel=================
-			FileInputStream fileToWrite = new FileInputStream(new File(".//dataForDownwardC_1.xlsx"));
+			FileInputStream fileToWrite = new FileInputStream(new File("./testFolder/dataDC.xlsx"));
 			XSSFWorkbook workbookToWrite = new XSSFWorkbook(fileToWrite); 
 			XSSFSheet sheetToWrite = workbookToWrite.getSheetAt(0);
-	        FileOutputStream outFile = new FileOutputStream(new File(".//dataForDownwardC_1.xlsx"));
+	        FileOutputStream outFile = new FileOutputStream(new File("./testFolder/dataDC.xlsx"));
 	        
 	      //===============Data For Sideward Carousel=================
-	        FileInputStream fileToWrite1 = new FileInputStream(new File(".//dataForSidewardC_1.xlsx"));
+	        FileInputStream fileToWrite1 = new FileInputStream(new File("./testFolder/dataSC.xlsx"));
 			XSSFWorkbook workbookToWrite1 = new XSSFWorkbook(fileToWrite1); 
 			XSSFSheet sheetToWrite1 = workbookToWrite1.getSheetAt(0);
-	        FileOutputStream outFile1 = new FileOutputStream(new File(".//dataForSidewardC_1.xlsx"));
+	        FileOutputStream outFile1 = new FileOutputStream(new File("./testFolder/dataSC.xlsx"));
 	        
 			Iterator<Row> rowIterator = sheet.iterator();
 			Iterator<Row> rowIterator1 = sheet1.iterator();
@@ -313,8 +313,8 @@ public class PivotEntity {
 					continue;
 				}
 				
-				Row rowToWrite = sheetToWrite.createRow(row.getRowNum());
-				Row rowToWrite1 = sheetToWrite1.createRow(row.getRowNum());
+				Row rowToWrite = sheetToWrite.createRow(row.getRowNum()-1);
+				Row rowToWrite1 = sheetToWrite1.createRow(row.getRowNum()-1);
 				//System.out.println("Row Number ---- "+row.getRowNum());
 				
 				HashMap<String, String> queryMap = new HashMap<String, String>();
@@ -361,11 +361,13 @@ public class PivotEntity {
 						dataRows, context, querystr, rowToWrite1);
 				workbookToWrite.write(outFile);
 				workbookToWrite1.write(outFile1);
+				
 				rowNumber++;
 			}
 	        
 	        
-	        
+			workbookToWrite.close();
+			workbookToWrite1.close();
 	        
 			/*reader = Files.newBufferedReader(Paths.get(".//FinalTestSample.csv"),Charset.forName("ISO-8859-1"));
 			reader1 = Files.newBufferedReader(Paths.get(".//subjectAndFact_2.csv"),Charset.forName("ISO-8859-1"));
