@@ -33,11 +33,9 @@ public class RepresentTheCarousels {
 			String[] fact1 = csvrecord.get(2).split(":::");
 			String[] fact2 = csvrecord.get(3).split(":::");
 
-			//System.out.println(members.length+" "+fact1.length+" "+fact2.length);
 			int recordNo = (int)csvrecord.getRecordNumber();
 			if(members.length < recordNo)
 				System.out.println("Subject And Members ------ "+subjectMap.get(recordNo));
-
 			else
 				System.out.println("Subject And Members ------ "+subjectMap.get(recordNo)+" : "+members[(int) csvrecord.getRecordNumber()]);
 			if(fact1Map.containsKey(recordNo) && fact1.length >= recordNo)
@@ -75,17 +73,14 @@ public class RepresentTheCarousels {
 				if(fact2Map.containsKey(recordNo) && fact1.length >= recordNo)
 					System.out.println("Facts ------ "+fact2Map.get(recordNo)+" : "+fact2[i]);
 			}
-			//System.out.println(members.length+" "+fact1.length+" "+fact2.length);
-			
 			
 			System.out.println("============================================================");
 		}
 	}
 	public static void main(String[] args) {
 
-		
 		Reader dcreader; Reader screader; Reader subFactDownReader; Reader subFactSideReader;
-		
+		CSVParser subfactdowncsvParser = null, subfactsidecsvParser = null;
 		try {
 
 			dcreader = Files.newBufferedReader(Paths.get(".//DownwardCarousel.csv"),Charset.forName("ISO-8859-1"));
@@ -96,8 +91,8 @@ public class RepresentTheCarousels {
 			CSVParser dccsvParser = new CSVParser(dcreader, CSVFormat.DEFAULT);
 			CSVParser sccsvParser = new CSVParser(screader, CSVFormat.DEFAULT);
 
-			CSVParser subfactdowncsvParser = new CSVParser(subFactDownReader, CSVFormat.DEFAULT);
-			CSVParser subfactsidecsvParser = new CSVParser(subFactSideReader, CSVFormat.DEFAULT);
+			subfactdowncsvParser = new CSVParser(subFactDownReader, CSVFormat.DEFAULT);
+			subfactsidecsvParser = new CSVParser(subFactSideReader, CSVFormat.DEFAULT);
 			
 			HashMap<Integer,String> subjectDownMap = new HashMap<Integer,String>();
 			HashMap<Integer,String> fact1DownMap = new HashMap<Integer,String>();
@@ -130,10 +125,6 @@ public class RepresentTheCarousels {
 					fact2SideMap.put((int) (subfactcsvRecord.getRecordNumber()+1), factList[1]);
 				
 			}
-			//List<String> subject = fillTheDataStructure(subfactcsvParser, 0);
-			//System.out.println(subjectMap);
-			//System.out.println(fact1Map);
-			//System.out.println(fact2Map);
 			//showOneFullCarousel(dccsvParser, subjectDownMap, fact1DownMap, fact2DownMap);
 
 			System.out.println("Downward Carousels ===============================");
@@ -141,12 +132,17 @@ public class RepresentTheCarousels {
 			System.out.println("Sideward ===============================");
 			representCarousel(sccsvParser, subjectSideMap, fact1SideMap, fact2SideMap);
 			System.out.println("=====================================================");
-			//showOneFullCarousel(dccsvParser, subjectDownMap, fact1DownMap, fact2DownMap);
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		}finally {
+			try {
+				subfactdowncsvParser.close();
+				subfactsidecsvParser.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 }

@@ -1,14 +1,8 @@
 package main.java;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,20 +14,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.opencsv.CSVWriter;
+import main.java.util.WorkBookUtil;
 
 /**
  * 
- * Calculates the critical ranking score for each attributes.
- * Based on the score select members and facts.
+ * Calculates the critical ranking score for each attributes. Based on the score
+ * select members and facts.
  *
  */
 public class CriticalRanking {
@@ -216,9 +206,7 @@ public class CriticalRanking {
 
 	public static void getMembersAndFacts(HashMap<String, Double> criticalScore, String header, Row rowToWrite)
 			throws IOException {
-		
-		
-        
+
 		HashMap<String, Double> sortedCrtiticalScores = sortByValue(criticalScore);
 
 		System.out.println("Max score is .... " + sortedCrtiticalScores);
@@ -238,67 +226,49 @@ public class CriticalRanking {
 			}
 
 		}
-		
+
 		Cell headerCell = rowToWrite.createCell(0);
 		headerCell.setCellValue(String.valueOf(header));
-		
+
 		Cell subjectCell = rowToWrite.createCell(1);
 		subjectCell.setCellValue(String.valueOf(subjectCol));
-		
+
 		Cell factsCell = rowToWrite.createCell(2);
 		factsCell.setCellValue(String.join(":::", facts));
-		
-		//String data[] = { header, subjectCol, String.join(":::", facts) };
-		//workbookToWrite.write(stream);
-		// writer.close();
+
 	}
 
 	public static void main(String[] args) {
-
 		List<List<Double>> tfidfDocsVector = new ArrayList<List<Double>>();
 		CriticalRanking calculator = new CriticalRanking();
-
-		/*Reader reader;
-		FileWriter outputFile = null;
-		File file = new File(".//subjectAndFact_2.csv");
-
+		XSSFSheet subFactSheetToWrite = null;
+		XSSFSheet testSampleSheet = null;
 		try {
-			outputFile = new FileWriter(file);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		CSVWriter writer = new CSVWriter(outputFile);*/
-
-		try {
-			FileInputStream infile = new FileInputStream(new File(".//TestSample.xlsx"));
-
-			// Create Workbook instance holding reference to .xlsx file
-			XSSFWorkbook workbook = new XSSFWorkbook(infile);
-
-			// Get first/desired sheet from the workbook
-			XSSFSheet sheet = workbook.getSheetAt(0);
+			// Reading the file TestSample.xlsx
+			testSampleSheet = WorkBookUtil.getWorkbookSheet(".//TestSample.xlsx");
 			
-			FileInputStream fileToWrite = new FileInputStream(new File("./testFolder/subFact.xlsx"));
-			XSSFWorkbook workbookToWrite = new XSSFWorkbook(fileToWrite); 
-			XSSFSheet sheetToWrite = workbookToWrite.getSheetAt(0);
-	        FileOutputStream outFile = new FileOutputStream(new File("./testFolder/subFact.xlsx"));
-	        
-			Iterator<Row> rowIterator = sheet.iterator();
+			// Writing the file subFact.xlsx
+			subFactSheetToWrite = WorkBookUtil.getWorkbookSheet("./testFolder/subFact.xlsx");
+
+			FileOutputStream subFactOutputFile = new FileOutputStream(new File("./testFolder/subFact.xlsx"));
+
+			Iterator<Row> rowIterator = testSampleSheet.iterator();
 			int rowNumber = 0;
-			
+
 			while (rowIterator.hasNext()) {
 				Row row = rowIterator.next();
+
 				if (row.getRowNum() == 0) {
 					rowNumber++;
 					continue;
 				}
-				
-				Row rowToWrite = sheetToWrite.createRow(row.getRowNum()-1);
-				//System.out.println("Row Number ---- "+row.getRowNum());
+
+				Row rowToWrite = subFactSheetToWrite.createRow(row.getRowNum() - 1);
+
 				List<List<String>> attrDoc = new ArrayList<List<String>>();
 				List<List<String>> contextDoc = new ArrayList<List<String>>();
 				List<List<String>> queryDoc = new ArrayList<List<String>>();
+
 				HashMap<String, String> queryMap = new HashMap<String, String>();
 				// For each row, iterate through all the columns
 				Iterator<Cell> cellIterator = row.cellIterator();
@@ -334,11 +304,7 @@ public class CriticalRanking {
 						for (String query : queries) {
 							List<String> queryList = new ArrayList<String>();
 							int index = query.indexOf("===");
-							System.out.println(query);
-							if (index != -1 /*
-											 * || !query.substring(0, index).isEmpty() ||
-											 * !query.substring(index+3).isEmpty()
-											 */) {
+							if (index != -1) {
 								queryMap.put(query.substring(0, index), query.substring(index + 3));
 								queryList.add(query.substring(0, index));
 								queryDoc.add(queryList);
@@ -351,73 +317,32 @@ public class CriticalRanking {
 
 				}
 				HashMap<String, Double> attrTfIdfScores = getTdIdfVectors(attrDoc, calculator);
-
 				HashMap<String, Double> contextTfIdfScores = getTdIdfVectors(contextDoc, calculator);
-
 				HashMap<String, Double> queryTfIdfScores = getTdIdfVectors(queryDoc, calculator);
+
 				HashMap<String, Double> topicalScores = calculateTopicalScore(attrTfIdfScores, contextTfIdfScores,
 						calculator);
 				HashMap<String, Double> popScoreForAttr = calculatePopularityScore(queryMap, attrTfIdfScores,
 						queryTfIdfScores, calculator);
 				HashMap<String, Double> criticalScore = getCriticalScore(topicalScores, popScoreForAttr);
+
 				getMembersAndFacts(criticalScore, header, rowToWrite);
-				workbookToWrite.write(outFile);
-				
+				subFactSheetToWrite.getWorkbook().write(subFactOutputFile);
+
 				rowNumber++;
 			}
-			workbookToWrite.close();
-			/*
-			 * reader =
-			 * Files.newBufferedReader(Paths.get(".//FinalTestSample.csv"),Charset.forName(
-			 * "ISO-8859-1")); CSVParser csvParser = new CSVParser(reader,
-			 * CSVFormat.DEFAULT); for (CSVRecord csvRecord : csvParser) {
-			 * if(csvRecord.getRecordNumber() == 1 || csvRecord.getRecordNumber() > 2)
-			 * continue;
-			 * 
-			 * List<List<String>> attrDoc = new ArrayList<List<String>>();
-			 * List<List<String>> contextDoc = new ArrayList<List<String>>();
-			 * List<List<String>> queryDoc = new ArrayList<List<String>>();
-			 * 
-			 * String[] allAttr = csvRecord.get(0).split(":::");
-			 * //System.out.println(allAttr.length); String[] contexts =
-			 * csvRecord.get(2).split(":::"); String[] queries =
-			 * csvRecord.get(3).split(":::"); for(String attr : allAttr) { List<String>
-			 * attrList = new ArrayList<String>(); if(attr != null) { attrList.add(attr); }
-			 * attrDoc.add(attrList); } HashMap<String,Double> attrTfIdfScores =
-			 * getTdIdfVectors(attrDoc,calculator); //System.out.println(attrTfIdfScores);
-			 * 
-			 * for(String contx : contexts) { List<String> contextList = new
-			 * ArrayList<String>(); if(contx != null) { contextList.add(contx); }
-			 * contextDoc.add(contextList); } HashMap<String,Double> contextTfIdfScores =
-			 * getTdIdfVectors(contextDoc,calculator); HashMap<String,String> queryMap = new
-			 * HashMap<String,String>(); for(String query : queries) { List<String>
-			 * queryList = new ArrayList<String>(); int index = query.indexOf("===");
-			 * System.out.println(query); if(index != -1 || !query.substring(0,
-			 * index).isEmpty() || !query.substring(index+3).isEmpty()) {
-			 * queryMap.put(query.substring(0, index), query.substring(index+3));
-			 * queryList.add(query.substring(0, index)); queryDoc.add(queryList); }
-			 * 
-			 * }
-			 * 
-			 * HashMap<String,Double> queryTfIdfScores =
-			 * getTdIdfVectors(queryDoc,calculator);
-			 * 
-			 * //System.out.println(queryTfIdfScores); HashMap<String,Double> topicalScores
-			 * = calculateTopicalScore(attrTfIdfScores,contextTfIdfScores,calculator);
-			 * HashMap<String,Double> popScoreForAttr = calculatePopularityScore(queryMap,
-			 * attrTfIdfScores, queryTfIdfScores, calculator); HashMap<String,Double>
-			 * criticalScore = getCriticalScore(topicalScores,popScoreForAttr);
-			 * //System.out.println(criticalScore);
-			 * 
-			 * getMembersAndFacts(criticalScore, csvRecord.get(0), writer); }
-			 * writer.close();
-			 */
+			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}finally {
+			try {
+				subFactSheetToWrite.getWorkbook().close();
+				testSampleSheet.getWorkbook().close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		calculator.getCosineSimilarity(tfidfDocsVector);
-
 	}
 }

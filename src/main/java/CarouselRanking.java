@@ -1,17 +1,10 @@
 package main.java;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -19,21 +12,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.opencsv.CSVWriter;
+import main.java.util.WorkBookUtil;
 
 /**
  * 
- * Ranks the carousel based on ranking function and
- * writes to an excel with the ranking function for
- * each pivot entity.
+ * Ranks the carousel based on ranking function and writes to an excel with the
+ * ranking function for each pivot entity.
  *
  */
 
@@ -206,57 +194,33 @@ public class CarouselRanking {
 	public static void main(String[] args) {
 
 		CarouselRanking calculator = new CarouselRanking();
-		/*
-		 * Reader dcreader; Reader screader;
-		 * 
-		 * FileWriter outputFile1=null; FileWriter outputFile2=null; File file1 = new
-		 * File(".//DownwardCarouselRanking.csv"); File file2 = new
-		 * File(".//SidewardCarouselRanking.csv");
-		 * 
-		 * try { outputFile1 = new FileWriter(file1); outputFile2 = new
-		 * FileWriter(file2); } catch (IOException e1) { // TODO Auto-generated catch
-		 * block e1.printStackTrace(); } CSVWriter writer1 = new CSVWriter(outputFile1);
-		 * CSVWriter writer2 = new CSVWriter(outputFile2);
-		 */
-
-		// ===========================================================================================================
 		try {
 
-			// ===============Data For Downward Carousel=================
-			FileInputStream fileToWrite = new FileInputStream(new File("./testFolder/DownwardCarouselRanking.xlsx"));
-			XSSFWorkbook workbookToWrite = new XSSFWorkbook(fileToWrite);
-			XSSFSheet sheetToWrite = workbookToWrite.getSheetAt(0);
-			FileOutputStream outFile = new FileOutputStream(new File("./testFolder/DownwardCarouselRanking.xlsx"));
+			// Output file For Downward Carousel Ranking
+			XSSFSheet downwardCarouselRankingSheetToWrite = WorkBookUtil
+					.getWorkbookSheet("./testFolder/DownwardCarouselRanking.xlsx");
+			FileOutputStream downwardCarouselRankingOutputFile = new FileOutputStream(
+					new File("./testFolder/DownwardCarouselRanking.xlsx"));
 
-			// ===============Data For Sideward Carousel=================
-			FileInputStream fileToWrite1 = new FileInputStream(new File("./testFolder/SidewardCarouselRanking.xlsx"));
-			XSSFWorkbook workbookToWrite1 = new XSSFWorkbook(fileToWrite1);
-			XSSFSheet sheetToWrite1 = workbookToWrite1.getSheetAt(0);
-			FileOutputStream outFile1 = new FileOutputStream(new File("./testFolder/SidewardCarouselRanking.xlsx"));
+			// Output file For Sideward Carousel Ranking
+			XSSFSheet sidewardCarouselRankingSheetToWrite = WorkBookUtil
+					.getWorkbookSheet("./testFolder/SidewardCarouselRanking.xlsx");
+			FileOutputStream sidewardCarouselRankingOutputFile = new FileOutputStream(
+					new File("./testFolder/SidewardCarouselRanking.xlsx"));
 
-			FileInputStream dcfile = new FileInputStream(new File("./testFolder/DownwardCarousel.xlsx"));
-			FileInputStream scfile = new FileInputStream(new File("./testFolder/SidewardCarousel.xlsx"));
+			// Read the carousels
+			XSSFSheet downwardCarouselSheet = WorkBookUtil.getWorkbookSheet("./testFolder/DownwardCarousel.xlsx");
+			XSSFSheet sidewardCarouselSheet = WorkBookUtil.getWorkbookSheet("./testFolder/SidewardCarousel.xlsx");
 
-			// Create Workbook instance holding reference to .xlsx file
-			XSSFWorkbook workbook1 = new XSSFWorkbook(dcfile);
-			XSSFWorkbook workbook2 = new XSSFWorkbook(scfile);
+			Iterator<Row> downwardCarouselSheetRowIterator = downwardCarouselSheet.iterator();
+			Iterator<Row> sidewardCarouselSheetRowIterator = sidewardCarouselSheet.iterator();
 
-			// Get first/desired sheet from the workbook
-			XSSFSheet sheet1 = workbook1.getSheetAt(0);
-			XSSFSheet sheet2 = workbook2.getSheetAt(0);
-
-			Iterator<Row> rowIterator1 = sheet1.iterator();
-			Iterator<Row> rowIterator2 = sheet2.iterator();
-
-			while (rowIterator1.hasNext()) {
-				Row row = rowIterator1.next();
-				Row rowToWrite = sheetToWrite.createRow(row.getRowNum());
-				String context = null;
-				String queries = null;
-				String pivotEntity = null;
+			while (downwardCarouselSheetRowIterator.hasNext()) {
+				Row row = downwardCarouselSheetRowIterator.next();
+				Row rowToWrite = downwardCarouselRankingSheetToWrite.createRow(row.getRowNum());
+				String context = null, queries = null, pivotEntity = null, header = null;
 
 				Iterator<Cell> cellIterator = row.cellIterator();
-				String header = null;
 				int cellNumber = 0;
 
 				while (cellIterator.hasNext()) {
@@ -292,6 +256,7 @@ public class CarouselRanking {
 						queryTfIdfScores, calculator);
 				double relScore = calculateRelatedScore(pivotEntity, queryMap);
 				double rankingScore = 0;
+
 				if (popScore == 0) {
 					rankingScore = relScore;
 				} else if (relScore == 0) {
@@ -299,8 +264,9 @@ public class CarouselRanking {
 				} else {
 					rankingScore = popScore * relScore;
 				}
-				Cell noCell = rowToWrite.createCell(0);
-				noCell.setCellValue(row.getRowNum());
+
+				Cell numberCell = rowToWrite.createCell(0);
+				numberCell.setCellValue(row.getRowNum());
 
 				Cell entityCell = rowToWrite.createCell(1);
 				entityCell.setCellValue(pivotEntity);
@@ -309,15 +275,12 @@ public class CarouselRanking {
 				scoreCell.setCellValue(String.valueOf(rankingScore));
 			}
 
-			while (rowIterator2.hasNext()) {
-				Row row = rowIterator2.next();
-				Row rowToWrite = sheetToWrite1.createRow(row.getRowNum());
-				String context = null;
-				String queries = null;
-				String pivotEntity = null;
+			while (sidewardCarouselSheetRowIterator.hasNext()) {
+				Row row = sidewardCarouselSheetRowIterator.next();
+				Row rowToWrite = sidewardCarouselRankingSheetToWrite.createRow(row.getRowNum());
+				String context = null, queries = null, pivotEntity = null, header = null;
 
 				Iterator<Cell> cellIterator = row.cellIterator();
-				String header = null;
 				int cellNumber = 0;
 
 				while (cellIterator.hasNext()) {
@@ -372,77 +335,13 @@ public class CarouselRanking {
 				scoreCell.setCellValue(String.valueOf(rankingScore));
 
 			}
-			workbookToWrite.write(outFile); workbookToWrite.close();
-			workbookToWrite1.write(outFile1); workbookToWrite1.close();
+			downwardCarouselRankingSheetToWrite.getWorkbook().write(downwardCarouselRankingOutputFile);
+			downwardCarouselRankingSheetToWrite.getWorkbook().close();
+			sidewardCarouselRankingSheetToWrite.getWorkbook().write(sidewardCarouselRankingOutputFile);
+			sidewardCarouselRankingSheetToWrite.getWorkbook().close();
 
-			/*
-			 * dcreader =
-			 * Files.newBufferedReader(Paths.get(".//DownwardCarousel.csv"),Charset.forName(
-			 * "ISO-8859-1")); screader =
-			 * Files.newBufferedReader(Paths.get(".//SidewardCarousel.csv"),Charset.forName(
-			 * "ISO-8859-1")); CSVParser dccsvParser = new CSVParser(dcreader,
-			 * CSVFormat.DEFAULT); CSVParser sccsvParser = new CSVParser(screader,
-			 * CSVFormat.DEFAULT);
-			 * 
-			 * for(CSVRecord dcrecord : dccsvParser) { if(dcrecord.getRecordNumber() == 1)
-			 * continue;
-			 * 
-			 * String[] contexts = dcrecord.get(5).split(":::"); String[] header =
-			 * dcrecord.get(7).split(":::"); String[] queries =
-			 * dcrecord.get(6).split(":::");
-			 * 
-			 * HashMap<String,String> queryMap = new HashMap<String,String>();
-			 * List<List<String>> queryDoc = new ArrayList<List<String>>(); for(String query
-			 * : queries) { List<String> queryList = new ArrayList<String>(); int index =
-			 * query.indexOf("===");
-			 * 
-			 * queryMap.put(query.substring(0, index), query.substring(index+3));
-			 * 
-			 * queryList.add(query.substring(0, index)); queryDoc.add(queryList); }
-			 * 
-			 * HashMap<String,Double> queryTfIdfScores =
-			 * getTdIdfVectors(queryDoc,calculator); double popScore =
-			 * calculatePopularityScore(contexts, header, queryMap,
-			 * queryTfIdfScores,calculator); double relScore =
-			 * calculateRelatedScore(dcrecord.get(0), queryMap); double rankingScore = 0;
-			 * if(popScore == 0 ) { rankingScore = relScore; }else if(relScore == 0) {
-			 * rankingScore = popScore; }else { rankingScore = popScore * relScore; }
-			 * 
-			 * String[] data = {String.valueOf(dcrecord.getRecordNumber()), dcrecord.get(0),
-			 * String.valueOf(rankingScore)}; writer1.writeNext(data); }
-			 * 
-			 * for(CSVRecord screcord : sccsvParser) { if(screcord.getRecordNumber() == 1)
-			 * continue;
-			 * 
-			 * String[] contexts = screcord.get(5).split(":::"); String[] header =
-			 * screcord.get(7).split(":::"); String[] queries =
-			 * screcord.get(6).split(":::");
-			 * 
-			 * HashMap<String,String> queryMap = new HashMap<String,String>();
-			 * List<List<String>> queryDoc = new ArrayList<List<String>>(); for(String query
-			 * : queries) { List<String> queryList = new ArrayList<String>(); int index =
-			 * query.indexOf("===");
-			 * 
-			 * queryMap.put(query.substring(0, index), query.substring(index+3));
-			 * 
-			 * queryList.add(query.substring(0, index)); queryDoc.add(queryList); }
-			 * 
-			 * HashMap<String,Double> queryTfIdfScores =
-			 * getTdIdfVectors(queryDoc,calculator); double popScore =
-			 * calculatePopularityScore(contexts, header, queryMap,
-			 * queryTfIdfScores,calculator); double relScore =
-			 * calculateRelatedScore(screcord.get(0), queryMap); double rankingScore = 0;
-			 * if(popScore == 0 ) { rankingScore = relScore; }else if(relScore == 0) {
-			 * rankingScore = popScore; }else { rankingScore = popScore * relScore; }
-			 * String[] data = {String.valueOf(screcord.getRecordNumber()), screcord.get(0),
-			 * String.valueOf(rankingScore)}; writer2.writeNext(data); }
-			 * 
-			 * writer1.close(); writer2.close();
-			 */
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
-
 }

@@ -4,15 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,20 +14,14 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.opencsv.CSVWriter;
-
+import main.java.util.WorkBookUtil;
 import net.sf.extjwnl.JWNL;
 import net.sf.extjwnl.JWNLException;
 import net.sf.extjwnl.data.IndexWord;
@@ -59,15 +47,11 @@ public class CarouselTitle {
 	private static List<String> findHypernyms(IndexWord word) throws JWNLException {
 		// Get all of the hypernyms (parents) of the first sense of word
 		PointerTargetNodeList hypernyms = PointerUtils.getDirectHypernyms(word.getSenses().get(0));
-		// System.out.println("Direct hypernyms of \"" + word.getLemma() + "\":");
 		List<String> hypernymsForSubj = new ArrayList<String>();
 
-		// hypernyms.print();
 		for (PointerTargetNode h : hypernyms) {
-			// System.out.println(h.getPointerTarget().getSynset().getWords());
 			List<Word> w1 = h.getPointerTarget().getSynset().getWords();
 			for (Word w : w1) {
-				// System.out.println(w.getLemma());
 				hypernymsForSubj.add(w.getLemma());
 			}
 		}
@@ -81,8 +65,7 @@ public class CarouselTitle {
 		List<String> nouns = new ArrayList<String>();
 		try {
 			// load chunking model
-			modelInParse = new FileInputStream(".//en-parser-chunking.bin"); // from
-																				// http://opennlp.sourceforge.net/models-1.5/
+			modelInParse = new FileInputStream(".//en-parser-chunking.bin");
 			ParserModel model = new ParserModel(modelInParse);
 
 			// create parse tree
@@ -94,9 +77,7 @@ public class CarouselTitle {
 			for (Parse p : topParses)
 				getNounPhrases(p, nounPhrases);
 
-			// print noun phrases
 			for (String s : nounPhrases) {
-				// System.out.println(s);
 				nouns.add(s);
 			}
 
@@ -124,14 +105,9 @@ public class CarouselTitle {
 
 	}
 
-	private static void generateTitlesForDownward(XSSFSheet sheet1, HashMap<Integer, String[]> contextMap,
+	private static void generateTitlesForDownwardCarousel(XSSFSheet sheet1, HashMap<Integer, String[]> contextMap,
 			HashMap<Integer, String[]> queryMap, HashMap<Integer, String> headerMap, Dictionary dictionary,
 			XSSFSheet sheetToWrite) throws JWNLException, IOException {
-
-		/*
-		 * String header[] = {"Pivot Entity", "Carousel Title", "Fact 1", "Fact 2",
-		 * "Members", "Context", "Queries", "Header"}; writer1.writeNext(header);
-		 */
 
 		Iterator<Row> rowIterator = sheet1.iterator();
 		int rowNumber = 0;
@@ -142,10 +118,8 @@ public class CarouselTitle {
 				rowNumber++;
 				continue;
 			}
-			System.out.println("Row number is ---- " + row.getRowNum());
 			Row rowToWrite = sheetToWrite.createRow(row.getRowNum() - 1);
 			String[] contextArr = contextMap.get(row.getRowNum());
-			// System.out.println(contextArr[1]);
 
 			String[] queries = queryMap.get(row.getRowNum());
 			String attributes = headerMap.get(row.getRowNum());
@@ -153,20 +127,12 @@ public class CarouselTitle {
 			LinkedHashMap<String, String> queryMap1 = new LinkedHashMap<String, String>();
 
 			for (String query : queries) {
-				// List<String> queryList = new ArrayList<String>();
 				int index = query.indexOf("===");
-
 				queryMap1.put(query.substring(0, index), query.substring(index + 3));
 			}
 
 			Iterator<Cell> cellIterator = row.cellIterator();
-			String header = null;
-			String penitity = null;
-			String fact1 = null;
-			String fact2 = null;
-			String member = null;
-			String context = null;
-			String queryStr = null;
+			String penitity = null, fact1 = null, fact2 = null, member = null, context = null, queryStr = null;
 			int cellNumber = 0;
 
 			while (cellIterator.hasNext()) {
@@ -192,13 +158,11 @@ public class CarouselTitle {
 
 			for (String m : members) {
 				IndexWord indexWord = dictionary.getIndexWord(POS.NOUN, m);
-				// System.out.println(indexWord);
 				if (indexWord != null) {
 					List<String> hypernym = findHypernyms(indexWord);
 					hypernymForSub.addAll(hypernym);
 				}
 			}
-			System.out.println("Downward -----");
 			String title = getScores(contextArr, queryMap1, hypernymForSub);
 
 			Cell entityCell = rowToWrite.createCell(0);
@@ -225,56 +189,12 @@ public class CarouselTitle {
 			Cell attrCell = rowToWrite.createCell(7);
 			attrCell.setCellValue(attributes);
 
-			/*
-			 * System.out.println(dc.get(0)+"--------"+title); String data[] = {dc.get(0),
-			 * title, dc.get(1), dc.get(2), dc.get(3), dc.get(4), dc.get(5), attributes};
-			 * writer1.writeNext(data);
-			 */
 		}
-
-		/*
-		 * for(CSVRecord dc : dccsvParser) {
-		 * //System.out.println("DC RN "+dc.getRecordNumber());
-		 * 
-		 * String[] contextArr = contextMap.get((int)dc.getRecordNumber());
-		 * //System.out.println(contextArr[1]);
-		 * 
-		 * String[] queries = queryMap.get((int)dc.getRecordNumber()); String attributes
-		 * = headerMap.get((int)dc.getRecordNumber());
-		 * 
-		 * LinkedHashMap<String,String> queryMap1 = new LinkedHashMap<String,String>();
-		 * 
-		 * for(String query : queries) { //List<String> queryList = new
-		 * ArrayList<String>(); int index = query.indexOf("===");
-		 * 
-		 * queryMap1.put(query.substring(0, index), query.substring(index+3)); }
-		 * 
-		 * //System.out.println(queryMap1); String[] members = dc.get(1).split(":::");
-		 * HashSet<String> hypernymForSub = new HashSet<String>();
-		 * 
-		 * for(String m : members) { IndexWord indexWord =
-		 * dictionary.getIndexWord(POS.NOUN, m); //System.out.println(indexWord);
-		 * if(indexWord != null) { List<String> hypernym = findHypernyms(indexWord);
-		 * hypernymForSub.addAll(hypernym); } } System.out.println("Downward -----");
-		 * String title = getScores(contextArr, queryMap1, hypernymForSub);
-		 * System.out.println(dc.get(0)+"--------"+title); String data[] = {dc.get(0),
-		 * title, dc.get(1), dc.get(2), dc.get(3), dc.get(4), dc.get(5), attributes};
-		 * writer1.writeNext(data); }
-		 */
-
-		System.out.println("========================");
-
 	}
 
-	private static void generateTitlesForSideward(XSSFSheet sheet2, HashMap<Integer, String[]> contextMap,
+	private static void generateTitlesForSidewardCarousel(XSSFSheet sheet2, HashMap<Integer, String[]> contextMap,
 			HashMap<Integer, String[]> queryMap, HashMap<Integer, String> headerMap, Dictionary dictionary,
 			XSSFSheet sheetToWrite1) throws JWNLException, IOException {
-
-		/*
-		 * String header[] = {"Pivot Entity", "Carousel Title", "Fact 1", "Fact 2",
-		 * "Members", "Context", "Queries", "Header"}; writer2.writeNext(header);
-		 */
-
 		Iterator<Row> rowIterator = sheet2.iterator();
 		int rowNumber = 0;
 
@@ -284,10 +204,8 @@ public class CarouselTitle {
 				rowNumber++;
 				continue;
 			}
-			System.out.println("Row number is ---- " + row.getRowNum());
 			Row rowToWrite = sheetToWrite1.createRow(row.getRowNum() - 1);
 			String[] contextArr = contextMap.get(row.getRowNum());
-			// System.out.println(contextArr[1]);
 
 			String[] queries = queryMap.get(row.getRowNum());
 			String attributes = headerMap.get(row.getRowNum());
@@ -295,20 +213,12 @@ public class CarouselTitle {
 			LinkedHashMap<String, String> queryMap1 = new LinkedHashMap<String, String>();
 
 			for (String query : queries) {
-				// List<String> queryList = new ArrayList<String>();
 				int index = query.indexOf("===");
-
 				queryMap1.put(query.substring(0, index), query.substring(index + 3));
 			}
 
 			Iterator<Cell> cellIterator = row.cellIterator();
-			String header = null;
-			String penitity = null;
-			String fact1 = null;
-			String fact2 = null;
-			String member = null;
-			String context = null;
-			String queryStr = null;
+			String penitity = null, fact1 = null, fact2 = null, member = null, context = null, queryStr = null;
 			int cellNumber = 0;
 
 			while (cellIterator.hasNext()) {
@@ -328,19 +238,17 @@ public class CarouselTitle {
 				}
 				cellNumber++;
 			}
-			String[] members = member.split(":::");
+			String[] subjectMembers = member.split(":::");
 
 			HashSet<String> hypernymForSub = new HashSet<String>();
 
-			for (String m : members) {
-				IndexWord indexWord = dictionary.getIndexWord(POS.NOUN, m);
-				// System.out.println(indexWord);
+			for (String subjectMember : subjectMembers) {
+				IndexWord indexWord = dictionary.getIndexWord(POS.NOUN, subjectMember);
 				if (indexWord != null) {
 					List<String> hypernym = findHypernyms(indexWord);
 					hypernymForSub.addAll(hypernym);
 				}
 			}
-			System.out.println("Sideward -----");
 			String title = getScores(contextArr, queryMap1, hypernymForSub);
 
 			Cell entityCell = rowToWrite.createCell(0);
@@ -368,7 +276,6 @@ public class CarouselTitle {
 			attrCell.setCellValue(attributes);
 		}
 
-		System.out.println("========================");
 	}
 
 	public static String getScores(String[] context, LinkedHashMap<String, String> queryMap,
@@ -382,7 +289,6 @@ public class CarouselTitle {
 		boolean noun_hardConstraint = false;
 		boolean hardconstraint = false;
 		LinkedHashSet<String> query = new LinkedHashSet<String>(queryMap.keySet());
-		System.out.println(query);
 		HashMap<String, List<String>> Wq = generateBagOfWords(query);
 		HashMap<String, List<String>> Wa = generateBagOfWords(contextSet);
 		HashMap<String, List<String>> Ws = generateBagOfWords(hypernymForSub);
@@ -455,7 +361,6 @@ public class CarouselTitle {
 		System.out.println(Wq.size());
 
 		int[][] scores = new int[Wq.size()][2];
-		System.out.println(scores.length);
 		int k = 0;
 		for (Entry<String, List<String>> queryEntry : Wq.entrySet()) {
 
@@ -491,15 +396,12 @@ public class CarouselTitle {
 			Collections.sort(i1, Collections.reverseOrder());
 			if (!i1.isEmpty() || i1.size() != 0)
 				hypernymQuery = i1.get(0);
-			System.out.println("Values of k ----" + k);
 			scores[k][0] = contextQuery + hypernymQuery; // Saves the descriptive score
-			// System.out.println(queryEntry.getKey()+" "+(contextQuery + hypernymQuery));
 			k++;
 		}
 		int queryIndex = findIndexWithMaxPair(scores);
 		Set<String> queries = Wq.keySet();
 		List<String> queryList = new ArrayList<String>(queries);
-		// System.out.println("Query "+queryList.get(queryIndex));
 		return queryList.get(queryIndex);
 	}
 
@@ -518,7 +420,6 @@ public class CarouselTitle {
 				index = tempindex;
 			}
 		}
-		// System.out.println("Max Value ==== "+maxValue);
 		return tempindex;
 	}
 
@@ -539,60 +440,28 @@ public class CarouselTitle {
 	}
 
 	public static void main(String args[]) throws FileNotFoundException, JWNLException {
-
-		Reader dcreader;
-		Reader screader;
-		Reader mainreader;
-		// String sentence = "Who is the author of The Call of the Wild?";
-
+		XSSFSheet downwardCarouselSheetToWrite = null, sidewardCarouselSheetToWrite = null;
 		try {
+			// Output file for downward carousel
+			downwardCarouselSheetToWrite = WorkBookUtil.getWorkbookSheet("./testFolder/DownwardCarousel.xlsx");
+			FileOutputStream downwardCarouselOutputFile = new FileOutputStream(
+					new File("./testFolder/DownwardCarousel.xlsx"));
 
-			/*
-			 * FileWriter outputFile1=null; FileWriter outputFile2=null; File file1 = new
-			 * File(".//DownwardCarousel.csv"); File file2 = new
-			 * File(".//SidewardCarousel.csv");
-			 * 
-			 * try { outputFile1 = new FileWriter(file1); outputFile2 = new
-			 * FileWriter(file2); } catch (IOException e1) { // TODO Auto-generated catch
-			 * block e1.printStackTrace(); } CSVWriter writer1 = new CSVWriter(outputFile1);
-			 * CSVWriter writer2 = new CSVWriter(outputFile2);
-			 */
+			// Output file for Sideward Carousel
+			sidewardCarouselSheetToWrite = WorkBookUtil.getWorkbookSheet("./testFolder/SidewardCarousel.xlsx");
+			FileOutputStream sidewardCarouselOutFile = new FileOutputStream(
+					new File("./testFolder/SidewardCarousel.xlsx"));
 
-			// ========================================================================================
-			// ===============Data For Downward Carousel=================
-			FileInputStream fileToWrite = new FileInputStream(new File("./testFolder/DownwardCarousel.xlsx"));
-			XSSFWorkbook workbookToWrite = new XSSFWorkbook(fileToWrite);
-			XSSFSheet sheetToWrite = workbookToWrite.getSheetAt(0);
-			FileOutputStream outFile = new FileOutputStream(new File("./testFolder/DownwardCarousel.xlsx"));
+			XSSFSheet testSampleSheet = WorkBookUtil.getWorkbookSheet(".//TestSample.xlsx");
+			XSSFSheet dataDCSheet = WorkBookUtil.getWorkbookSheet("./testFolder/dataDC.xlsx");
+			XSSFSheet dataSCsheet = WorkBookUtil.getWorkbookSheet("./testFolder/dataSC.xlsx");
 
-			// ===============Data For Sideward Carousel=================
-			FileInputStream fileToWrite1 = new FileInputStream(new File("./testFolder/SidewardCarousel.xlsx"));
-			XSSFWorkbook workbookToWrite1 = new XSSFWorkbook(fileToWrite1);
-			XSSFSheet sheetToWrite1 = workbookToWrite1.getSheetAt(0);
-			FileOutputStream outFile1 = new FileOutputStream(new File("./testFolder/SidewardCarousel.xlsx"));
-
-			FileInputStream mainfile = new FileInputStream(new File(".//TestSample.xlsx"));
-			FileInputStream dcfile = new FileInputStream(new File("./testFolder/dataDC.xlsx"));
-			FileInputStream scfile = new FileInputStream(new File("./testFolder/dataSC.xlsx"));
-
-			// Create Workbook instance holding reference to .xlsx file
-			XSSFWorkbook workbook = new XSSFWorkbook(mainfile);
-			XSSFWorkbook workbookFrDc = new XSSFWorkbook(dcfile);
-			XSSFWorkbook workbookFrSc = new XSSFWorkbook(scfile);
-
-			// Get first/desired sheet from the workbook
-			XSSFSheet sheet = workbook.getSheetAt(0);
-			XSSFSheet sheetForDc = workbookFrDc.getSheetAt(0);
-			XSSFSheet sheetForSc = workbookFrSc.getSheetAt(0);
-
-			Iterator<Row> rowIterator = sheet.iterator();
-			Iterator<Row> rowIteratorFordc = sheetForDc.iterator();
-			Iterator<Row> rowIteratorForsc = sheetForSc.iterator();
+			Iterator<Row> rowIterator = testSampleSheet.iterator();
 			int rowNumber = 0;
-			
-			
+
 			JWNL.initialize(new FileInputStream(".//properties.xml"));
 			final Dictionary dictionary = Dictionary.getInstance();
+
 			HashMap<Integer, String[]> contextMap = new HashMap<Integer, String[]>();
 			HashMap<Integer, String[]> queryMap = new HashMap<Integer, String[]>();
 			HashMap<Integer, String> headerMap = new HashMap<Integer, String>();
@@ -629,29 +498,25 @@ public class CarouselTitle {
 
 			}
 
-			generateTitlesForDownward(sheetForDc, contextMap, queryMap, headerMap, dictionary, sheetToWrite);
-			generateTitlesForSideward(sheetForSc, contextMap, queryMap, headerMap, dictionary, sheetToWrite1);
+			generateTitlesForDownwardCarousel(dataDCSheet, contextMap, queryMap, headerMap, dictionary,
+					downwardCarouselSheetToWrite);
+			generateTitlesForSidewardCarousel(dataSCsheet, contextMap, queryMap, headerMap, dictionary,
+					sidewardCarouselSheetToWrite);
 
-			workbookToWrite.write(outFile);
-			workbookToWrite1.write(outFile1);
-			workbookToWrite.close();
-			workbookToWrite1.close();
+			downwardCarouselSheetToWrite.getWorkbook().write(downwardCarouselOutputFile);
+			sidewardCarouselSheetToWrite.getWorkbook().write(sidewardCarouselOutFile);
+			downwardCarouselSheetToWrite.getWorkbook().close();
+			sidewardCarouselSheetToWrite.getWorkbook().close();
 
-			
-			// extractNounPhrases(sentence);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				downwardCarouselSheetToWrite.getWorkbook().close();
+				sidewardCarouselSheetToWrite.getWorkbook().close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-
-		/*
-		 * IndexWord indexWord = dictionary.getIndexWord(POS.NOUN, "rain");
-		 * findHypernyms(indexWord);
-		 */
-
-		/*
-		 * List<Synset> senses = indexWord.getSenses(); for (Synset set : senses) {
-		 * System.out.println(indexWord + ": " + set.getGloss()); }
-		 */
 	}
-
 }
