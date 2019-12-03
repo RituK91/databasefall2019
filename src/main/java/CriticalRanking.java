@@ -69,21 +69,6 @@ public class CriticalRanking {
 		return tf(doc, term) * idf(docs, term);
 	}
 
-	/**
-	 * Method to create termVector according to its tfidf score.
-	 */
-	/*
-	 * public void tfIdfCalculator() { double tf; //term frequency double idf;
-	 * //inverse document frequency double tfidf; //term requency inverse document
-	 * frequency for (String[] docTermsArray : termsDocsArray) { double[]
-	 * tfidfvectors = new double[allTerms.size()]; int count = 0; for (String terms
-	 * : allTerms) { tf = new TfIdf().tfCalculator(docTermsArray, terms); idf = new
-	 * TfIdf().idfCalculator(termsDocsArray, terms); tfidf = tf * idf;
-	 * tfidfvectors[count] = tfidf; count++; } tfidfDocsVector.add(tfidfvectors);
-	 * //storing document vectors; } }
-	 * 
-	 * /** Method to calculate cosine similarity between all the documents.
-	 */
 	public double getCosineSimilarity(List<List<Double>> tfidfDocsVector) {
 		double cosinesim = 0;
 		for (int i = 0; i < tfidfDocsVector.size(); i++) {
